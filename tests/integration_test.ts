@@ -984,8 +984,6 @@ Deno.test({
 Deno.test({
   name: "integration: system parsedEvents",
   ignore: skip,
-  sanitizeResources: false,
-  sanitizeOps: false,
   async fn() {
     const c = getClient();
     const name = `podman-deno-evt-${Date.now()}`;
@@ -1032,7 +1030,6 @@ Deno.test({
 Deno.test({
   name: "integration: network connect and disconnect",
   ignore: skip,
-  sanitizeResources: false,
   async fn() {
     const c = getClient();
     const netName = `podman-deno-cd-net-${Date.now()}`;
@@ -1083,7 +1080,6 @@ Deno.test({
 Deno.test({
   name: "integration: manifest modify",
   ignore: skip,
-  sanitizeResources: false,
   async fn() {
     const c = getClient();
     const name = `localhost/podman-deno-manifest-mod-${Date.now()}`;
@@ -1121,7 +1117,6 @@ Deno.test({
 Deno.test({
   name: "integration: pod restart, kill, top, stats",
   ignore: skip,
-  sanitizeResources: false,
   async fn() {
     const c = getClient();
     const podName = `podman-deno-pod-ops-${Date.now()}`;

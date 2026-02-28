@@ -99,7 +99,7 @@ export class SystemApi {
         }
       }
     } finally {
-      reader.releaseLock();
+      await reader.cancel();
     }
   }
 

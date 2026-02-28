@@ -275,6 +275,7 @@ export class ContainersApi {
       "Content-Type": "application/x-tar",
     });
     if (res.status !== 200) await throwRawError(res, "PUT", path);
+    await res.body?.cancel();
   }
 
   /** Run a container health check and return the results. */

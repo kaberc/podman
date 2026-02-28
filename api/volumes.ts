@@ -85,5 +85,6 @@ export class VolumesApi {
       "Content-Type": "application/x-tar",
     });
     if (res.status !== 204) await throwRawError(res, "POST", path);
+    await res.body?.cancel();
   }
 }

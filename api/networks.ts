@@ -79,6 +79,7 @@ export class NetworksApi {
       try { json = JSON.parse(text); } catch { /* plain text */ }
       throw createPodmanError(res.status, json, "POST", path);
     }
+    await res.body?.cancel();
   }
 
   /** Disconnect a container from a network. */
@@ -96,6 +97,7 @@ export class NetworksApi {
       try { json = JSON.parse(text); } catch { /* plain text */ }
       throw createPodmanError(res.status, json, "POST", path);
     }
+    await res.body?.cancel();
   }
 
   /** Remove unused networks. Returns a list of pruned networks. */
