@@ -1,0 +1,8 @@
+PLAN.md
+
+.podman-swagger.yaml
+.podman-openapi3.yaml
+
+# npm build artifacts
+_build_tmp/
+npm/
