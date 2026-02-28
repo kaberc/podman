@@ -49,8 +49,6 @@ jobs:
           deno task build-npm "$VERSION"
       - run: npm publish --access public --provenance
         working-directory: ./npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   github-release:
     needs: [publish-jsr, publish-npm]

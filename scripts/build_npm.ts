@@ -73,7 +73,7 @@ await build({
     },
     repository: {
       type: "git",
-      url: "git+https://github.com/podman-deno/podman.git",
+      url: "git+https://github.com/kaberc/podman.git",
     },
     keywords: [
       "podman",
