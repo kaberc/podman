@@ -1,7 +1,7 @@
 {
   "name": "@kaberc/podman",
   "description": "Typed Podman client for Deno and Node.js. Full libpod API with zero dependencies.",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "exports": "./mod.ts",
   "exclude": ["scripts/", "_node/", "_build_tmp/", "npm/"],
   "publish": {

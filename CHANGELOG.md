@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2
+
+### Fixes
+
+- Fixed npm package repository URL (`kaberc/podman` instead of `podman-deno/podman`)
+- Fixed CI integration test compatibility with Podman < 5.x (`images.resolve` gracefully skipped)
+- Fixed release workflow: JSR version now matches tag, npm uses OIDC trusted publishing
+
 ## 0.1.0
 
 Initial release.
@@ -16,5 +24,5 @@ Initial release.
 
 ### Runtimes
 
- **Deno** — `jsr:@kaberc/podman` — requires Deno 2.4+
- **Node.js** — `@ostanin/podman` on npm — requires Node.js 18+, ESM and CJS supported
+- **Deno** — `jsr:@kaberc/podman` — requires Deno 2.4+
+- **Node.js** — `@ostanin/podman` on npm — requires Node.js 18+, ESM and CJS supported

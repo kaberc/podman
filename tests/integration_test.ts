@@ -7,7 +7,7 @@
  */
 
 import { assertEquals } from "@std/assert";
-import { createClient, type PodmanClient } from "../mod.ts";
+import { createClient, type PodmanClient, PodmanError } from "../mod.ts";
 
 function findSocket(): string | null {
   const rootful = "/run/podman/podman.sock";
@@ -884,8 +884,14 @@ Deno.test({
     assertEquals(Array.isArray(history), true);
     assertEquals(history.length > 0, true);
 
-    const resolved = await c.images.resolve("alpine");
-    assertEquals(resolved != null, true);
+    try {
+      const resolved = await c.images.resolve("alpine");
+      assertEquals(resolved != null, true);
+    } catch (e) {
+      // images.resolve was added in Podman 5.x; skip on older versions
+      if (e instanceof PodmanError && e.status === 405) return;
+      throw e;
+    }
   },
 });
 
