@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.3
+
+### Fixes
+
+- Fixed response body resource leaks in `networks.connect()`, `networks.disconnect()`, `containers.putArchive()`, `volumes.import()`
+- Fixed `parsedEvents()` stream cleanup — `reader.cancel()` propagates cancellation through the pipe chain, eliminating leaks when breaking out early
+- Removed all `sanitizeResources: false` test overrides — all 361 tests pass with full Deno resource sanitizers
+- Fixed npm publish: added `--provenance` flag for OIDC Trusted Publishing
+
 ## 0.1.2
 
 ### Fixes

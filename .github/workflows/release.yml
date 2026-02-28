@@ -47,7 +47,7 @@ jobs:
       - run: |
           VERSION="${GITHUB_REF_NAME#v}"
           deno task build-npm "$VERSION"
-      - run: npm publish --access public
+      - run: npm publish --provenance --access public
         working-directory: ./npm
 
   github-release:
