@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4
+
+### Fixes
+
+- Fixed npm OIDC Trusted Publishing: upgraded to Node 24 LTS which ships npm >=11.5.1 (required for OIDC auth)
+
 ## 0.1.3
 
 ### Fixes
