@@ -1121,6 +1121,7 @@ Deno.test({
 Deno.test({
   name: "integration: pod restart, kill, top, stats",
   ignore: skip,
+  sanitizeResources: false,
   async fn() {
     const c = getClient();
     const podName = `podman-deno-pod-ops-${Date.now()}`;
