@@ -380,17 +380,31 @@ The `auth` option accepts either `{ username, password }` or `{ identityToken }`
 ## Error Handling
 
 - **404 responses**: `inspect()` methods return `null` instead of throwing
-- **Other errors**: Throw `PodmanError` with `status`, `message`, `method`, and `path`
+- **Other errors**: Throw `PodmanError` (or a typed subclass) with `status`, `message`, `method`, and `path`
+
+Typed subclasses dispatched by HTTP status:
+
+| Subclass | Status | Common cause |
+| --- | --- | --- |
+| `PodmanAuthError` | 401 | Missing or invalid credentials |
+| `PodmanForbiddenError` | 403 | Operation not allowed |
+| `PodmanNotFoundError` | 404 | Resource does not exist |
+| `PodmanConflictError` | 409 | "already exists" / "already attached" / "already running" |
+| `PodmanServerError` | 5xx | libpod or storage error |
+
+All subclasses extend `PodmanError`, so existing `instanceof PodmanError` checks keep working.
 
 ```ts
-import { PodmanError } from "@ostanin/podman"; // or jsr:@kaberc/podman
+import { PodmanConflictError, PodmanError } from "@ostanin/podman"; // or jsr:@kaberc/podman
 
 try {
-  await podman.containers.start("nonexistent");
+  await podman.networks.connect("my-net", { container: "my-ctr" });
 } catch (e) {
+  if (e instanceof PodmanConflictError) return; // already attached — fine
   if (e instanceof PodmanError) {
     console.error(`${e.method} ${e.path}: ${e.status} ${e.message}`);
   }
+  throw e;
 }
 ```
 

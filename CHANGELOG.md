@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.2.0
+
+### Features
+
+- **Typed error subclasses** — `PodmanError` now dispatches to a semantic subclass based on HTTP status, so consumers can match on error kind instead of numeric status codes:
+  - `PodmanAuthError` (401)
+  - `PodmanForbiddenError` (403)
+  - `PodmanNotFoundError` (404)
+  - `PodmanConflictError` (409) — e.g. "already exists" / "already attached"
+  - `PodmanServerError` (5xx)
+  - All extend `PodmanError`, so existing `instanceof PodmanError` checks keep working.
+
+  ```ts
+  try {
+    await podman.networks.connect("net", { container: "ctr" });
+  } catch (e) {
+    if (e instanceof PodmanConflictError) return; // already attached — fine
+    throw e;
+  }
+  ```
+
+### Behavior changes
+
+- `err.name` for 401/403/404/409/5xx responses is now the subclass name (`"PodmanAuthError"`, `"PodmanConflictError"`, etc.) rather than `"PodmanError"`. Code branching on `instanceof` is unaffected; code branching on `err.name === "PodmanError"` (e.g. log filters, error serializers) will need to update.
+
 ## 0.1.4
 
 ### Fixes

@@ -7,7 +7,16 @@ export {
   type TcpClientOptions,
   type UnixClientOptions,
 } from "./client.ts";
-export { PodmanError, createPodmanError, throwRawError } from "./types/errors.ts";
+export {
+  createPodmanError,
+  PodmanAuthError,
+  PodmanConflictError,
+  PodmanError,
+  PodmanForbiddenError,
+  PodmanNotFoundError,
+  PodmanServerError,
+  throwRawError,
+} from "./types/errors.ts";
 export {
   createTcpTransport,
   createTransport,

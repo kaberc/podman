@@ -1,5 +1,14 @@
 import { assertEquals, assertInstanceOf } from "@std/assert";
-import { extractMessage, PodmanError } from "../../types/errors.ts";
+import {
+  createPodmanError,
+  extractMessage,
+  PodmanAuthError,
+  PodmanConflictError,
+  PodmanError,
+  PodmanForbiddenError,
+  PodmanNotFoundError,
+  PodmanServerError,
+} from "../../types/errors.ts";
 
 Deno.test("PodmanError: properties are set correctly", () => {
   const err = new PodmanError({
@@ -78,4 +87,87 @@ Deno.test("extractMessage: returns 'Unknown error' for non-string message", () =
 
 Deno.test("extractMessage: returns 'Unknown error' for string input", () => {
   assertEquals(extractMessage("some string"), "Unknown error");
+});
+
+Deno.test("createPodmanError: 401 dispatches to PodmanAuthError", () => {
+  const err = createPodmanError(401, { message: "unauthorized" }, "GET", "/x");
+  assertInstanceOf(err, PodmanAuthError);
+  assertInstanceOf(err, PodmanError);
+  assertEquals(err.name, "PodmanAuthError");
+  assertEquals(err.status, 401);
+  assertEquals(err.message, "unauthorized");
+  assertEquals(err.method, "GET");
+  assertEquals(err.path, "/x");
+});
+
+Deno.test("createPodmanError: 403 dispatches to PodmanForbiddenError", () => {
+  const err = createPodmanError(403, { message: "forbidden" }, "POST", "/y");
+  assertInstanceOf(err, PodmanForbiddenError);
+  assertInstanceOf(err, PodmanError);
+  assertEquals(err.name, "PodmanForbiddenError");
+  assertEquals(err.status, 403);
+});
+
+Deno.test("createPodmanError: 404 dispatches to PodmanNotFoundError", () => {
+  const err = createPodmanError(404, { message: "no such" }, "GET", "/z");
+  assertInstanceOf(err, PodmanNotFoundError);
+  assertInstanceOf(err, PodmanError);
+  assertEquals(err.name, "PodmanNotFoundError");
+  assertEquals(err.status, 404);
+});
+
+Deno.test("createPodmanError: 409 dispatches to PodmanConflictError", () => {
+  const err = createPodmanError(
+    409,
+    { cause: "container already exists in network" },
+    "POST",
+    "/networks/foo/connect",
+  );
+  assertInstanceOf(err, PodmanConflictError);
+  assertInstanceOf(err, PodmanError);
+  assertEquals(err.name, "PodmanConflictError");
+  assertEquals(err.status, 409);
+  assertEquals(err.message, "container already exists in network");
+});
+
+Deno.test("createPodmanError: 500 dispatches to PodmanServerError", () => {
+  const err = createPodmanError(500, { message: "boom" }, "GET", "/x");
+  assertInstanceOf(err, PodmanServerError);
+  assertInstanceOf(err, PodmanError);
+  assertEquals(err.name, "PodmanServerError");
+  assertEquals(err.status, 500);
+});
+
+Deno.test("createPodmanError: 503 also dispatches to PodmanServerError", () => {
+  const err = createPodmanError(503, { message: "unavailable" }, "GET", "/x");
+  assertInstanceOf(err, PodmanServerError);
+  assertEquals(err.status, 503);
+});
+
+Deno.test("createPodmanError: unmapped 4xx returns base PodmanError", () => {
+  const err = createPodmanError(418, { message: "teapot" }, "GET", "/x");
+  assertInstanceOf(err, PodmanError);
+  assertEquals(err.constructor.name, "PodmanError");
+  assertEquals(err.name, "PodmanError");
+  assertEquals(err.status, 418);
+});
+
+Deno.test("createPodmanError: 400 returns base PodmanError (not in dispatch table)", () => {
+  const err = createPodmanError(400, { message: "bad request" }, "POST", "/x");
+  assertInstanceOf(err, PodmanError);
+  assertEquals(err.constructor.name, "PodmanError");
+});
+
+Deno.test("typed subclasses are catchable as PodmanError (backwards compat)", () => {
+  const errs = [
+    createPodmanError(401, { message: "" }, "GET", "/"),
+    createPodmanError(403, { message: "" }, "GET", "/"),
+    createPodmanError(404, { message: "" }, "GET", "/"),
+    createPodmanError(409, { message: "" }, "GET", "/"),
+    createPodmanError(500, { message: "" }, "GET", "/"),
+  ];
+  for (const err of errs) {
+    assertInstanceOf(err, PodmanError);
+    assertInstanceOf(err, Error);
+  }
 });
