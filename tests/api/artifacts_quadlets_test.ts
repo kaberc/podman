@@ -311,7 +311,7 @@ Deno.test("quadlets.file: returns text content on 200", async () => {
   assertEquals(result, "[Container]\nImage=alpine");
 });
 
-Deno.test("quadlets.file: throws PodmanError on error", async () => {
+Deno.test("quadlets.file: returns null on 404", async () => {
   const api = new QuadletsApi(
     mockTransport(() => ({ status: 200, json: null }), {
       requestRaw: () =>
@@ -322,11 +322,26 @@ Deno.test("quadlets.file: throws PodmanError on error", async () => {
         ),
     }),
   );
+  const result = await api.file("missing.container");
+  assertEquals(result, null);
+});
+
+Deno.test("quadlets.file: throws PodmanError on 500", async () => {
+  const api = new QuadletsApi(
+    mockTransport(() => ({ status: 200, json: null }), {
+      requestRaw: () =>
+        Promise.resolve(
+          new Response(JSON.stringify({ message: "server error" }), {
+            status: 500,
+          }),
+        ),
+    }),
+  );
   const err = await assertRejects(
-    () => api.file("missing.container"),
+    () => api.file("broken.container"),
     PodmanError,
   );
-  assertEquals(err.status, 404);
+  assertEquals(err.status, 500);
 });
 
 Deno.test("quadlets.list: returns array on 200", async () => {

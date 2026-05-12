@@ -65,22 +65,26 @@ export class ContainersApi {
     return (json ?? []) as ListContainer[];
   }
 
-  /** Start a container. */
-  async start(nameOrId: string): Promise<void> {
+  /** Start a container. Idempotent; returns `{ alreadyRunning }`. */
+  async start(nameOrId: string): Promise<{ alreadyRunning: boolean }> {
     const path = `/containers/${encodeURIComponent(nameOrId)}/start`;
     const { status, json } = await this.#t.request("POST", path);
-    if (status !== 204 && status !== 304) throw createPodmanError(status, json, "POST", path);
+    if (status === 204) return { alreadyRunning: false };
+    if (status === 304) return { alreadyRunning: true };
+    throw createPodmanError(status, json, "POST", path);
   }
 
-  /** Stop a container with an optional timeout. */
+  /** Stop a container with an optional timeout. Idempotent; returns `{ alreadyStopped }`. */
   async stop(
     nameOrId: string,
     query?: ContainerStopQuery,
-  ): Promise<void> {
+  ): Promise<{ alreadyStopped: boolean }> {
     const path =
       `/containers/${encodeURIComponent(nameOrId)}/stop${buildQuery(query)}`;
     const { status, json } = await this.#t.request("POST", path);
-    if (status !== 204 && status !== 304) throw createPodmanError(status, json, "POST", path);
+    if (status === 204) return { alreadyStopped: false };
+    if (status === 304) return { alreadyStopped: true };
+    throw createPodmanError(status, json, "POST", path);
   }
 
   /** Restart a container with an optional timeout. */
@@ -286,11 +290,13 @@ export class ContainersApi {
     return json as HealthCheckResults;
   }
 
-  /** Initialize a container, preparing it to be started. */
-  async init(nameOrId: string): Promise<void> {
+  /** Initialize a container. Idempotent; returns `{ alreadyInitialized }`. */
+  async init(nameOrId: string): Promise<{ alreadyInitialized: boolean }> {
     const path = `/containers/${encodeURIComponent(nameOrId)}/init`;
     const { status, json } = await this.#t.request("POST", path);
-    if (status !== 204 && status !== 304) throw createPodmanError(status, json, "POST", path);
+    if (status === 204) return { alreadyInitialized: false };
+    if (status === 304) return { alreadyInitialized: true };
+    throw createPodmanError(status, json, "POST", path);
   }
 
   /** Update a container's resource limits. */

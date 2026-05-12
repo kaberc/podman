@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.3.0
+
+### Features
+
+- **`PodmanNotModifiedError` (304)** — `createPodmanError` now dispatches HTTP 304 to a dedicated subclass. Consumers no longer need to combine a typed-error check with a raw `e.status === 304` check for endpoints that still surface 304 as an error. Container `start()` / `stop()` / `init()` handle 304 directly via the idempotent return values below.
+
+- **Idempotent container lifecycle calls** — `containers.start()` / `stop()` / `init()` are now silently idempotent: they resolve whether or not the container was already in the target state, and report what happened via the return value.
+
+  ```ts
+  const { alreadyRunning } = await podman.containers.start("ctr");
+  const { alreadyStopped } = await podman.containers.stop("ctr");
+  const { alreadyInitialized } = await podman.containers.init("ctr");
+  ```
+
+- **`null` on 404 extended to other lookups** — `exec.inspect()` now returns `null` on 404, matching every other `inspect()` method. `quadlets.file()` also returns `null` on 404 — extending the null-on-404 convention from `inspect()` methods to file-content getters.
+
+### Behavior changes (breaking)
+
+- `containers.start()` return type: `Promise<void>` → `Promise<{ alreadyRunning: boolean }>`. Callers using `await` without assignment are unaffected; callers explicitly typing the result as `void` need to update.
+- `containers.stop()` return type: `Promise<void>` → `Promise<{ alreadyStopped: boolean }>`.
+- `containers.init()` return type: `Promise<void>` → `Promise<{ alreadyInitialized: boolean }>`.
+- `pods.start()` return type: `Promise<PodStartReport>` → `Promise<PodStartReport | null>`. Returns `null` on 304 (pod already running) instead of casting an empty body as a report — fixes a latent unsoundness.
+- `pods.stop()` return type: `Promise<PodStopReport>` → `Promise<PodStopReport | null>`. Same fix for 304 (pod already stopped).
+- `exec.inspect()` return type: `Promise<InspectExecSession>` → `Promise<InspectExecSession | null>`.
+- `quadlets.file()` return type: `Promise<string>` → `Promise<string | null>`.
+
 ## 0.2.0
 
 ### Features

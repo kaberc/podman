@@ -68,23 +68,25 @@ export class PodsApi {
     return json as PodRmReport;
   }
 
-  /** Start all containers in a pod. */
-  async start(nameOrId: string): Promise<PodStartReport> {
+  /** Start all containers in a pod. Returns `null` if already running (HTTP 304). */
+  async start(nameOrId: string): Promise<PodStartReport | null> {
     const path = `/pods/${encodeURIComponent(nameOrId)}/start`;
     const { status, json } = await this.#t.request("POST", path);
-    if (status !== 200 && status !== 304) throw createPodmanError(status, json, "POST", path);
+    if (status === 304) return null;
+    if (status !== 200) throw createPodmanError(status, json, "POST", path);
     return json as PodStartReport;
   }
 
-  /** Stop all containers in a pod with an optional timeout. */
+  /** Stop all containers in a pod with an optional timeout. Returns `null` if already stopped (HTTP 304). */
   async stop(
     nameOrId: string,
     query?: PodStopQuery,
-  ): Promise<PodStopReport> {
+  ): Promise<PodStopReport | null> {
     const path =
       `/pods/${encodeURIComponent(nameOrId)}/stop${buildQuery(query)}`;
     const { status, json } = await this.#t.request("POST", path);
-    if (status !== 200 && status !== 304) throw createPodmanError(status, json, "POST", path);
+    if (status === 304) return null;
+    if (status !== 200) throw createPodmanError(status, json, "POST", path);
     return json as PodStopReport;
   }
 

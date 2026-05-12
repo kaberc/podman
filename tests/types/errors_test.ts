@@ -7,6 +7,7 @@ import {
   PodmanError,
   PodmanForbiddenError,
   PodmanNotFoundError,
+  PodmanNotModifiedError,
   PodmanServerError,
 } from "../../types/errors.ts";
 
@@ -89,6 +90,21 @@ Deno.test("extractMessage: returns 'Unknown error' for string input", () => {
   assertEquals(extractMessage("some string"), "Unknown error");
 });
 
+Deno.test("createPodmanError: 304 dispatches to PodmanNotModifiedError", () => {
+  const err = createPodmanError(
+    304,
+    { message: "not modified" },
+    "POST",
+    "/containers/abc/start",
+  );
+  assertInstanceOf(err, PodmanNotModifiedError);
+  assertInstanceOf(err, PodmanError);
+  assertEquals(err.name, "PodmanNotModifiedError");
+  assertEquals(err.status, 304);
+  assertEquals(err.method, "POST");
+  assertEquals(err.path, "/containers/abc/start");
+});
+
 Deno.test("createPodmanError: 401 dispatches to PodmanAuthError", () => {
   const err = createPodmanError(401, { message: "unauthorized" }, "GET", "/x");
   assertInstanceOf(err, PodmanAuthError);
@@ -160,6 +176,7 @@ Deno.test("createPodmanError: 400 returns base PodmanError (not in dispatch tabl
 
 Deno.test("typed subclasses are catchable as PodmanError (backwards compat)", () => {
   const errs = [
+    createPodmanError(304, { message: "" }, "GET", "/"),
     createPodmanError(401, { message: "" }, "GET", "/"),
     createPodmanError(403, { message: "" }, "GET", "/"),
     createPodmanError(404, { message: "" }, "GET", "/"),

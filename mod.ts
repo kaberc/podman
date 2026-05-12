@@ -14,6 +14,7 @@ export {
   PodmanError,
   PodmanForbiddenError,
   PodmanNotFoundError,
+  PodmanNotModifiedError,
   PodmanServerError,
   throwRawError,
 } from "./types/errors.ts";

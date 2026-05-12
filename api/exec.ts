@@ -44,10 +44,11 @@ export class ExecApi {
     return res.body;
   }
 
-  /** Inspect an exec session. */
-  async inspect(id: string): Promise<InspectExecSession> {
+  /** Inspect an exec session. Returns `null` if the exec session is not found. */
+  async inspect(id: string): Promise<InspectExecSession | null> {
     const path = `/exec/${encodeURIComponent(id)}/json`;
     const { status, json } = await this.#t.request("GET", path);
+    if (status === 404) return null;
     if (status !== 200) throw createPodmanError(status, json, "GET", path);
     return json as InspectExecSession;
   }

@@ -98,18 +98,20 @@ Deno.test("containers.list: passes query params to path", async () => {
   assertEquals(capturedPath, "/containers/json?all=true");
 });
 
-Deno.test("containers.start: succeeds on 204", async () => {
+Deno.test("containers.start: returns { alreadyRunning: false } on 204", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 204, json: null })),
   );
-  await api.start("abc123");
+  const result = await api.start("abc123");
+  assertEquals(result.alreadyRunning, false);
 });
 
-Deno.test("containers.start: succeeds on 304 (already started)", async () => {
+Deno.test("containers.start: returns { alreadyRunning: true } on 304", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 304, json: null })),
   );
-  await api.start("abc123");
+  const result = await api.start("abc123");
+  assertEquals(result.alreadyRunning, true);
 });
 
 Deno.test("containers.start: throws on error", async () => {
@@ -119,18 +121,20 @@ Deno.test("containers.start: throws on error", async () => {
   await assertRejects(() => api.start("abc123"), PodmanError);
 });
 
-Deno.test("containers.stop: succeeds on 204", async () => {
+Deno.test("containers.stop: returns { alreadyStopped: false } on 204", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 204, json: null })),
   );
-  await api.stop("abc123");
+  const result = await api.stop("abc123");
+  assertEquals(result.alreadyStopped, false);
 });
 
-Deno.test("containers.stop: succeeds on 304 (already stopped)", async () => {
+Deno.test("containers.stop: returns { alreadyStopped: true } on 304", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 304, json: null })),
   );
-  await api.stop("abc123");
+  const result = await api.stop("abc123");
+  assertEquals(result.alreadyStopped, true);
 });
 
 Deno.test("containers.stop: passes timeout query", async () => {
@@ -1072,14 +1076,15 @@ Deno.test("pods.start: returns report on 200", async () => {
     })),
   );
   const result = await api.start("mypod");
-  assertEquals(result.Id, "pod123");
+  assertEquals(result?.Id, "pod123");
 });
 
-Deno.test("pods.start: succeeds on 304", async () => {
+Deno.test("pods.start: returns null on 304 (already running)", async () => {
   const api = new PodsApi(
     mockTransport(() => ({ status: 304, json: null })),
   );
-  await api.start("mypod");
+  const result = await api.start("mypod");
+  assertEquals(result, null);
 });
 
 Deno.test("pods.start: throws on 500", async () => {
@@ -1101,14 +1106,15 @@ Deno.test("pods.stop: returns report on 200", async () => {
     })),
   );
   const result = await api.stop("mypod");
-  assertEquals(result.Id, "pod123");
+  assertEquals(result?.Id, "pod123");
 });
 
-Deno.test("pods.stop: succeeds on 304", async () => {
+Deno.test("pods.stop: returns null on 304 (already stopped)", async () => {
   const api = new PodsApi(
     mockTransport(() => ({ status: 304, json: null })),
   );
-  await api.stop("mypod");
+  const result = await api.stop("mypod");
+  assertEquals(result, null);
 });
 
 Deno.test("pods.stop: passes timeout query", async () => {
@@ -1643,18 +1649,20 @@ Deno.test("containers.healthcheck: throws on error", async () => {
   assertEquals(err.status, 404);
 });
 
-Deno.test("containers.init: succeeds on 204", async () => {
+Deno.test("containers.init: returns { alreadyInitialized: false } on 204", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 204, json: null })),
   );
-  await api.init("abc");
+  const result = await api.init("abc");
+  assertEquals(result.alreadyInitialized, false);
 });
 
-Deno.test("containers.init: succeeds on 304", async () => {
+Deno.test("containers.init: returns { alreadyInitialized: true } on 304", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 304, json: null })),
   );
-  await api.init("abc");
+  const result = await api.init("abc");
+  assertEquals(result.alreadyInitialized, true);
 });
 
 Deno.test("containers.init: throws on error", async () => {
@@ -1834,18 +1842,26 @@ Deno.test("exec.inspect: returns InspectExecSession on 200", async () => {
     })),
   );
   const result = await api.inspect("exec123");
-  assertEquals(result.ID, "exec123");
+  assertEquals(result?.ID, "exec123");
 });
 
-Deno.test("exec.inspect: throws on error", async () => {
+Deno.test("exec.inspect: returns null on 404", async () => {
   const api = new ExecApi(
     mockTransport(() => ({ status: 404, json: { message: "not found" } })),
+  );
+  const result = await api.inspect("exec123");
+  assertEquals(result, null);
+});
+
+Deno.test("exec.inspect: throws on 500", async () => {
+  const api = new ExecApi(
+    mockTransport(() => ({ status: 500, json: { message: "server error" } })),
   );
   const err = await assertRejects(
     () => api.inspect("exec123"),
     PodmanError,
   );
-  assertEquals(err.status, 404);
+  assertEquals(err.status, 500);
 });
 
 Deno.test("exec.resize: succeeds on 201 with query params", async () => {

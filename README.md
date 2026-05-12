@@ -189,8 +189,8 @@ The `auth` option accepts either `{ username, password }` or `{ identityToken }`
 | `create(spec)` | Create a container |
 | `inspect(nameOrId)` | Inspect a container (returns `null` on 404) |
 | `list(query?)` | List containers |
-| `start(nameOrId)` | Start a container |
-| `stop(nameOrId, query?)` | Stop a container |
+| `start(nameOrId)` | Start a container (idempotent; returns `{ alreadyRunning }`) |
+| `stop(nameOrId, query?)` | Stop a container (idempotent; returns `{ alreadyStopped }`) |
 | `restart(nameOrId, query?)` | Restart a container |
 | `kill(nameOrId, query?)` | Send signal to container |
 | `pause(nameOrId)` | Pause a container |
@@ -211,7 +211,7 @@ The `auth` option accepts either `{ username, password }` or `{ identityToken }`
 | `getArchive(nameOrId, query)` | Get file archive from container |
 | `putArchive(nameOrId, body, query)` | Upload file archive to container |
 | `healthcheck(nameOrId)` | Run container healthcheck |
-| `init(nameOrId)` | Initialize a container |
+| `init(nameOrId)` | Initialize a container (idempotent; returns `{ alreadyInitialized }`) |
 | `update(nameOrId, resources, query?)` | Update container resource limits |
 | `changes(nameOrId, query?)` | List filesystem changes |
 | `mount(nameOrId)` | Mount a container's filesystem |
@@ -283,8 +283,8 @@ The `auth` option accepts either `{ username, password }` or `{ identityToken }`
 | `inspect(nameOrId)` | Inspect a pod (returns `null` on 404) |
 | `list(query?)` | List pods |
 | `remove(nameOrId, query?)` | Remove a pod |
-| `start(nameOrId)` | Start a pod |
-| `stop(nameOrId, query?)` | Stop a pod |
+| `start(nameOrId)` | Start a pod (idempotent; returns `null` on 304) |
+| `stop(nameOrId, query?)` | Stop a pod (idempotent; returns `null` on 304) |
 | `restart(nameOrId)` | Restart a pod |
 | `kill(nameOrId, query?)` | Send signal to pod |
 | `pause(nameOrId)` | Pause a pod |
@@ -323,7 +323,7 @@ The `auth` option accepts either `{ username, password }` or `{ identityToken }`
 | --- | --- |
 | `create(nameOrId, config)` | Create an exec instance (returns exec ID) |
 | `start(id, config?)` | Start exec and stream output |
-| `inspect(id)` | Inspect an exec instance |
+| `inspect(id)` | Inspect an exec instance (returns `null` on 404) |
 | `resize(id, query)` | Resize exec TTY |
 
 ### Generate (Podman-specific)
@@ -375,7 +375,7 @@ The `auth` option accepts either `{ username, password }` or `{ identityToken }`
 | `remove(name, query?)` | Remove a quadlet |
 | `removeAll(query?)` | Remove one or more quadlets |
 | `exists(name)` | Check if a quadlet exists |
-| `file(name)` | Get quadlet file contents |
+| `file(name)` | Get quadlet file contents (returns `null` on 404) |
 
 ## Error Handling
 
@@ -386,13 +386,16 @@ Typed subclasses dispatched by HTTP status:
 
 | Subclass | Status | Common cause |
 | --- | --- | --- |
+| `PodmanNotModifiedError` | 304 | Resource already in target state |
 | `PodmanAuthError` | 401 | Missing or invalid credentials |
 | `PodmanForbiddenError` | 403 | Operation not allowed |
 | `PodmanNotFoundError` | 404 | Resource does not exist |
-| `PodmanConflictError` | 409 | "already exists" / "already attached" / "already running" |
+| `PodmanConflictError` | 409 | "already exists" / "already attached" |
 | `PodmanServerError` | 5xx | libpod or storage error |
 
 All subclasses extend `PodmanError`, so existing `instanceof PodmanError` checks keep working.
+
+`containers.start()`, `containers.stop()`, and `containers.init()` are idempotent — they resolve on 304 with `{ alreadyRunning|Stopped|Initialized: true }` instead of throwing. `pods.start()` and `pods.stop()` resolve to `null` on 304. The `PodmanNotModifiedError` subclass exists for any other endpoint that surfaces 304.
 
 ```ts
 import { PodmanConflictError, PodmanError } from "@ostanin/podman"; // or jsr:@kaberc/podman

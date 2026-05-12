@@ -415,7 +415,7 @@ Deno.test({
 
       // Inspect exec session — should show it ran
       const info = await c.exec.inspect(execId);
-      assertEquals(typeof info.ContainerID, "string");
+      assertEquals(typeof info?.ContainerID, "string");
     } finally {
       try {
         await c.containers.stop(containerName, { timeout: 2 });

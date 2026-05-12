@@ -62,10 +62,14 @@ export class QuadletsApi {
     return status === 204;
   }
 
-  /** Get the contents of a quadlet file. */
-  async file(name: string): Promise<string> {
+  /** Get the contents of a quadlet file. Returns `null` if the quadlet is not found. */
+  async file(name: string): Promise<string | null> {
     const path = `/quadlets/${encodeURIComponent(name)}/file`;
     const res = await this.#t.requestRaw("GET", path);
+    if (res.status === 404) {
+      await res.body?.cancel();
+      return null;
+    }
     if (res.status !== 200) await throwRawError(res, "GET", path);
     return await res.text();
   }
