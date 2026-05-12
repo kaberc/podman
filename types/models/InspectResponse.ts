@@ -9,7 +9,6 @@ import type { HostConfig } from "./HostConfig.ts";
 import type { MountPoint } from "./MountPoint.ts";
 import type { NetworkSettings } from "./NetworkSettings.ts";
 import type { State } from "./State.ts";
-import type { Storage } from "./Storage.ts";
 /**
  * endpoint.
  */
@@ -40,5 +39,4 @@ export type InspectResponse = {
   SizeRootFs?: number;
   SizeRw?: number;
   State?: State;
-  Storage?: Storage;
 };

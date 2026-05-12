@@ -6,6 +6,11 @@ import type { ConfigReference } from "./ConfigReference.ts";
 import type { IPAM } from "./IPAM.ts";
 export type CreateRequest = {
   Attachable?: boolean;
+  /**
+   * Deprecated: CheckDuplicate is deprecated since API v1.44, but it defaults to true when sent by the client
+   * package to older daemons.
+   */
+  CheckDuplicate?: boolean;
   ConfigFrom?: ConfigReference;
   ConfigOnly?: boolean;
   Driver?: string;

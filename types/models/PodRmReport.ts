@@ -2,4 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type PodRmReport = Record<string, unknown>;
+export type PodRmReport = {
+  Err?: string;
+  Id?: string;
+  RemovedCtrs?: Record<string, string>;
+};

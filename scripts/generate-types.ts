@@ -3,8 +3,10 @@
 import { join } from "jsr:@std/path@1";
 import { parse as parseYaml } from "jsr:@std/yaml@1";
 
+// Pinned: `swagger-latest.yaml` (v6 master) drops `properties:` for ~44 schemas
+// (ListContainer, ContainerCreateResponse, *Report). Do not bump without re-checking.
 const PODMAN_SPEC_URL =
-  "https://storage.googleapis.com/libpod-master-releases/swagger-latest.yaml";
+  "https://storage.googleapis.com/libpod-master-releases/swagger-v5.8.2.yaml";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 const TYPES_DIR = join(ROOT, "types");

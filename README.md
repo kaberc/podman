@@ -467,7 +467,7 @@ The npm package is built from the Deno source using
 [`dnt`](https://github.com/denoland/dnt):
 
 ```sh
-deno task build-npm 0.4.0
+deno task build-npm 0.4.1
 ```
 
 This outputs a complete npm package to `./npm/` with ESM, CJS, and type

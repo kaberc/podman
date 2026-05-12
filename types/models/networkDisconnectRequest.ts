@@ -2,5 +2,5 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { DisconnectRequest } from "./DisconnectRequest.ts";
-export type networkDisconnectRequest = DisconnectRequest;
+import type { DisconnectOptions } from "./DisconnectOptions.ts";
+export type networkDisconnectRequest = DisconnectOptions;

@@ -2,25 +2,14 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+/**
+ * EndpointResource contains network resources allocated and used for a
+ * container in a network.
+ */
 export type EndpointResource = {
-  /**
-   * endpoint ID
-   */
   EndpointID?: string;
-  /**
-   * IPv4 address
-   */
   IPv4Address?: string;
-  /**
-   * IPv6 address
-   */
   IPv6Address?: string;
-  /**
-   * mac address
-   */
   MacAddress?: string;
-  /**
-   * name
-   */
   Name?: string;
 };

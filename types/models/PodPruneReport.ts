@@ -2,4 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type PodPruneReport = Record<string, unknown>;
+export type PodPruneReport = {
+  Err?: string;
+  Id?: string;
+};

@@ -2,4 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type ArtifactPullReport = Record<string, unknown>;
+import type { Digest } from "./Digest.ts";
+export type ArtifactPullReport = {
+  ArtifactDigest?: Digest;
+};

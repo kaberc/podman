@@ -2,4 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type SecretInfoReport = Record<string, unknown>;
+import type { SecretSpec } from "./SecretSpec.ts";
+export type SecretInfoReport = {
+  CreatedAt?: string;
+  ID?: string;
+  SecretData?: string;
+  Spec?: SecretSpec;
+  UpdatedAt?: string;
+};

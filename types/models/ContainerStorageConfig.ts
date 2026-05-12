@@ -49,12 +49,6 @@ export type ContainerStorageConfig = {
    */
   devices_from?: Array<string>;
   /**
-   * GPUs contains GPU device identifiers for CDI resolution.
-   * These will be resolved to full CDI device paths on the server side.
-   * Optional.
-   */
-  gpus?: Array<string>;
-  /**
    * HostDeviceList is used to recreate the mounted device on inherited containers
    */
   host_device_list?: Array<LinuxDevice>;

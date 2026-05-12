@@ -9,8 +9,8 @@ import type { EndpointIPAMConfig } from "./EndpointIPAMConfig.ts";
 export type EndpointSettings = {
   Aliases?: Array<string>;
   /**
-   * DNSNames holds all the (non fully qualified) DNS names associated to this
-   * endpoint. The first entry is used to generate PTR records.
+   * DNSNames holds all the (non fully qualified) DNS names associated to this endpoint. First entry is used to
+   * generate PTR records.
    */
   DNSNames?: Array<string>;
   DriverOpts?: Record<string, string>;
@@ -36,5 +36,8 @@ export type EndpointSettings = {
    * generated address).
    */
   MacAddress?: string;
+  /**
+   * Operational data
+   */
   NetworkID?: string;
 };

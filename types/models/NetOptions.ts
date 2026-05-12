@@ -21,7 +21,6 @@ export type NetOptions = {
    * NetworkOptions are additional options for each network
    */
   network_options?: Record<string, Array<string>>;
-  network_order?: Array<string>;
   networks?: Record<string, PerNetworkOptions>;
   no_manage_hostname?: boolean;
   no_manage_hosts?: boolean;

@@ -11,13 +11,13 @@ import type {
   ComponentVersion,
   ContainersPruneReportLibpod,
   ContainerTopOKBody,
-  DisconnectRequest,
   HistoryResponse,
   LibpodImageSummary,
   Mount,
   networkCreateLibpod,
+  networkDisconnectRequest,
   PruneReport,
-  Schema2List,
+  Schema2ListPublic as _Schema2ListPublic,
   SecretInfoReport as _SecretInfoReport,
   SpecGenerator as _SpecGenerator,
 } from "./models/index.ts";
@@ -36,7 +36,7 @@ export type ImageRemoveReport = {
 export type ImageHistory = HistoryResponse;
 export type ImagePruneReport = PruneReport;
 export type NetworkCreateOptions = networkCreateLibpod;
-export type NetworkDisconnectOptions = DisconnectRequest;
+export type NetworkDisconnectOptions = networkDisconnectRequest;
 export type VolumePruneReport = PruneReport;
 
 export type PlayKubeResourceReport = {
@@ -71,7 +71,7 @@ export type ManifestDescriptor = {
   [key: string]: unknown;
 };
 
-export type Schema2ListPublic = Schema2List & {
+export type Schema2ListPublic = Omit<_Schema2ListPublic, "manifests"> & {
   manifests?: ManifestDescriptor[];
 };
 export type SecretInfoReport = _SecretInfoReport & {

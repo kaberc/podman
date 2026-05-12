@@ -12,12 +12,6 @@ export type LogConfigLibpod = {
    */
   driver?: string;
   /**
-   * A set of log labels to apply
-   * Only available if LogDriver is set to "journald".
-   * Optional
-   */
-  labels?: Record<string, string>;
-  /**
    * A set of options to accompany the log driver.
    * Optional.
    */

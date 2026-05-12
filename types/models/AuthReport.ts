@@ -2,4 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type AuthReport = Record<string, unknown>;
+/**
+ * AuthReport describes the response for authentication check
+ */
+export type AuthReport = {
+  IdentityToken?: string;
+  Status?: string;
+};

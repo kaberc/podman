@@ -14,6 +14,7 @@ import type { NetworkMode } from "./NetworkMode.ts";
 import type { PidMode } from "./PidMode.ts";
 import type { PortMap } from "./PortMap.ts";
 import type { RestartPolicy } from "./RestartPolicy.ts";
+import type { StrSlice } from "./StrSlice.ts";
 import type { ThrottleDevice } from "./ThrottleDevice.ts";
 import type { Ulimit } from "./Ulimit.ts";
 import type { UsernsMode } from "./UsernsMode.ts";
@@ -36,11 +37,8 @@ export type HostConfig = {
   BlkioDeviceWriteIOps?: Array<ThrottleDevice>;
   BlkioWeight?: number;
   BlkioWeightDevice?: Array<WeightDevice>;
-  /**
-   * Applicable to UNIX platforms
-   */
-  CapAdd?: Array<string>;
-  CapDrop?: Array<string>;
+  CapAdd?: StrSlice;
+  CapDrop?: StrSlice;
   Cgroup?: CgroupSpec;
   /**
    * Applicable to UNIX platforms
@@ -80,6 +78,19 @@ export type HostConfig = {
   Init?: boolean;
   IpcMode?: IpcMode;
   Isolation?: Isolation;
+  /**
+   * KernelMemory specifies the kernel memory limit (in bytes) for the container.
+   * Deprecated: kernel 5.4 deprecated kmem.limit_in_bytes.
+   */
+  KernelMemory?: number;
+  /**
+   * Hard limit for kernel TCP buffer memory (in bytes).
+   *
+   * Deprecated: This field is deprecated and will be removed in the next release.
+   * Starting with 6.12, the kernel has deprecated kernel memory tcp accounting
+   * for cgroups v1.
+   */
+  KernelMemoryTCP?: number;
   Links?: Array<string>;
   LogConfig?: LogConfig;
   /**

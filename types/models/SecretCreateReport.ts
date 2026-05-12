@@ -2,4 +2,6 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type SecretCreateReport = Record<string, unknown>;
+export type SecretCreateReport = {
+  ID?: string;
+};

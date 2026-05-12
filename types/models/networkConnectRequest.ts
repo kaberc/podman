@@ -2,5 +2,5 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ConnectRequest } from "./ConnectRequest.ts";
-export type networkConnectRequest = ConnectRequest;
+import type { ConnectOptions } from "./ConnectOptions.ts";
+export type networkConnectRequest = ConnectOptions;

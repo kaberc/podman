@@ -20,11 +20,6 @@ export type ListQuadlet = {
    */
   Path?: string;
   /**
-   * Pod is the pod Quadlet file referenced by Pod= in [Container]
-   * Empty for quadlet types that do not support Pod=
-   */
-  Pod?: string;
-  /**
    * What is the status of the Quadlet - if present in systemd, will be a
    * systemd status, else will mention if the Quadlet has syntax errors
    */

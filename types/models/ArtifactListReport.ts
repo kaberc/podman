@@ -2,4 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type ArtifactListReport = Record<string, unknown>;
+import type { OCI1 } from "./OCI1.ts";
+export type ArtifactListReport = {
+  Manifest?: OCI1;
+  Name?: string;
+};

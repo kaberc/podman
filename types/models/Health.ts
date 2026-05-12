@@ -3,12 +3,11 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { HealthcheckResult } from "./HealthcheckResult.ts";
-import type { HealthStatus } from "./HealthStatus.ts";
 /**
  * Health stores information about the container's healthcheck results
  */
 export type Health = {
   FailingStreak?: number;
   Log?: Array<HealthcheckResult>;
-  Status?: HealthStatus;
+  Status?: string;
 };

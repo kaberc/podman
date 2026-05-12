@@ -2,16 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type PortMap = Record<
-  string,
-  Array<{
-    /**
-     * HostIP is the host IP Address
-     */
-    HostIp?: string;
-    /**
-     * HostPort is the host port number
-     */
-    HostPort?: string;
-  }>
->;
+import type { PortBinding } from "./PortBinding.ts";
+/**
+ * PortMap is a collection of PortBinding indexed by Port
+ */
+export type PortMap = Record<string, Array<PortBinding>>;

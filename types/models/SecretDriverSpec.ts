@@ -2,4 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type SecretDriverSpec = Record<string, unknown>;
+export type SecretDriverSpec = {
+  Name?: string;
+  Options?: Record<string, string>;
+};

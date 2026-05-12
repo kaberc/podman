@@ -82,4 +82,10 @@ export type Summary = {
    * Total size of the image including all layers it is composed of.
    */
   Size: number;
+  /**
+   * Total size of the image including all layers it is composed of.
+   *
+   * Deprecated: this field is omitted in API v1.44, but kept for backward compatibility. Use Size instead.
+   */
+  VirtualSize?: number;
 };

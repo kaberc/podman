@@ -2,4 +2,6 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type ImageLoadReport = Record<string, unknown>;
+export type ImageLoadReport = {
+  Names?: Array<string>;
+};

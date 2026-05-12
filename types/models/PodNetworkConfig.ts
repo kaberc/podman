@@ -16,6 +16,16 @@ export type PodNetworkConfig = {
    */
   Networks?: Record<string, PerNetworkOptions>;
   /**
+   * CNINetworks is a list of CNI networks to join the container to.
+   * If this list is empty, the default CNI network will be joined
+   * instead. If at least one entry is present, we will not join the
+   * default network (unless it is part of this list).
+   * Only available if NetNS is set to bridge.
+   * Optional.
+   * Deprecated: as of podman 4.0 use "Networks" instead.
+   */
+  cni_networks?: Array<string>;
+  /**
    * DNSOption is a set of DNS options that will be used in the infra
    * container's resolv.conf, which will, by default, be shared with all
    * containers in the pod.
@@ -92,7 +102,7 @@ export type PodNetworkConfig = {
    * PortMappings is a set of ports to map into the infra container.
    * As, by default, containers share their network with the infra
    * container, this will forward the ports to the entire pod.
-   * Only available if NetNS is set to Bridge or Pasta.
+   * Only available if NetNS is set to Bridge, Slirp, or Pasta.
    * Optional.
    */
   portmappings?: Array<PortMapping>;

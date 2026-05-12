@@ -4,7 +4,7 @@
 /* eslint-disable */
 import type { Volume } from "./Volume.ts";
 /**
- * # Volume list response
+ * Volume list response
  */
 export type ListResponse = {
   /**

@@ -97,6 +97,16 @@ export type SpecGenerator = {
    */
   chroot_directories?: Array<string>;
   /**
+   * CNINetworks is a list of CNI networks to join the container to.
+   * If this list is empty, the default CNI network will be joined
+   * instead. If at least one entry is present, we will not join the
+   * default network (unless it is part of this list).
+   * Only available if NetNS is set to bridge.
+   * Optional.
+   * Deprecated: as of podman 4.0 use "Networks" instead.
+   */
+  cni_networks?: Array<string>;
+  /**
    * Command is the container's command.
    * If not given and Image is specified, this will be populated by the
    * image's configuration.
@@ -202,17 +212,11 @@ export type SpecGenerator = {
    * protocol i.e map[uint16]string. Allowed protocols are "tcp", "udp", and "sctp", or some
    * combination of the three separated by commas.
    * If protocol is set to "" we will assume TCP.
-   * Only available if NetNS is set to Bridge or Pasta, and
+   * Only available if NetNS is set to Bridge or Slirp, and
    * PublishExposedPorts is set.
    * Optional.
    */
   expose?: unknown;
-  /**
-   * GPUs contains GPU device identifiers for CDI resolution.
-   * These will be resolved to full CDI device paths on the server side.
-   * Optional.
-   */
-  gpus?: Array<string>;
   /**
    * GroupEntry specifies an arbitrary string to append to the container's /etc/group file.
    * Optional.
@@ -377,13 +381,6 @@ export type SpecGenerator = {
    */
   network_options?: Record<string, Array<string>>;
   /**
-   * The order that networks will be configured in.
-   * If not set, alphabetical order based on network name will be used.
-   * If set: Must be the same length as Networks and its contents must be every key in the Networks map.
-   * Optional.
-   */
-  networkOrder?: Array<string>;
-  /**
    * NoNewPrivileges is whether the container will set the no new
    * privileges flag on create, which disables gaining additional
    * privileges (e.g. via setuid) in the container.
@@ -422,7 +419,7 @@ export type SpecGenerator = {
   pod?: string;
   /**
    * PortBindings is a set of ports to map into the container.
-   * Only available if NetNS is set to bridge or pasta.
+   * Only available if NetNS is set to bridge, slirp, or pasta.
    * Optional.
    */
   portmappings?: Array<PortMapping>;
@@ -447,7 +444,7 @@ export type SpecGenerator = {
    * random unused ports (guaranteed to be above 1024) on the host.
    * This is based on ports set in Expose below, and unknown ports specified
    * by the Image (if one is given).
-   * Only available if NetNS is set to Bridge or Pasta.
+   * Only available if NetNS is set to Bridge or Slirp.
    * Optional.
    */
   publish_image_ports?: boolean;

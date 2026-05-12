@@ -323,7 +323,7 @@ export type InspectContainerHostConfig = {
    * MemorySwappiness is the willingness of the kernel to page container
    * memory to swap. It is an integer from 0 to 100, with low numbers
    * being more likely to be put into swap.
-   * nil means swappiness is unset and the system default is used.
+   * 1, the default, will not set swappiness and use the system defaults.
    */
   MemorySwappiness?: number;
   /**
@@ -344,8 +344,8 @@ export type InspectContainerHostConfig = {
    * NetworkMode is the configuration of the container's network
    * namespace.
    * Populated as follows:
-   * default - A network namespace is being created and configured
-   * none - A network namespace is being created, not configured
+   * default - A network namespace is being created and configured via CNI
+   * none - A network namespace is being created, not configured via CNI
    * host - No network namespace created
    * container:<id> - Using another container's network namespace
    * ns:<path> - A path to a network namespace has been specified

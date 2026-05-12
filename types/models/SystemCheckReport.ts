@@ -3,6 +3,17 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * ServiceOptions provides the input for starting an API and sidecar pprof services
+ * SystemCheckReport provides a report of what a storage consistency check
+ * found, and if we removed anything that was damaged, what we removed.
  */
-export type SystemCheckReport = Record<string, unknown>;
+export type SystemCheckReport = {
+  Containers?: Record<string, Array<string>>;
+  Errors?: boolean;
+  Images?: Record<string, Array<string>>;
+  Layers?: Record<string, Array<string>>;
+  ROImages?: Record<string, Array<string>>;
+  ROLayers?: Record<string, Array<string>>;
+  RemovedContainers?: Record<string, string>;
+  RemovedImages?: Record<string, Array<string>>;
+  RemovedLayers?: Array<string>;
+};

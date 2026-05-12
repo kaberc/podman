@@ -3,21 +3,18 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Config } from "./Config.ts";
-import type { ContainerState } from "./ContainerState.ts";
 import type { Descriptor } from "./Descriptor.ts";
-import type { HealthSummary } from "./HealthSummary.ts";
 import type { HostConfig } from "./HostConfig.ts";
 import type { MountPoint } from "./MountPoint.ts";
 import type { NetworkingConfig } from "./NetworkingConfig.ts";
 import type { NetworkSettingsSummary } from "./NetworkSettingsSummary.ts";
 import type { Platform } from "./Platform.ts";
-import type { PortSummary } from "./PortSummary.ts";
+import type { Port } from "./Port.ts";
 export type Container = {
   Command?: string;
   Config?: Config;
   Created?: number;
   DefaultReadOnlyNonRecursive?: boolean;
-  Health?: HealthSummary;
   HostConfig?: HostConfig;
   Id?: string;
   Image?: string;
@@ -30,9 +27,9 @@ export type Container = {
   NetworkSettings?: NetworkSettingsSummary;
   NetworkingConfig?: NetworkingConfig;
   Platform?: Platform;
-  Ports?: Array<PortSummary>;
+  Ports?: Array<Port>;
   SizeRootFs?: number;
   SizeRw?: number;
-  State?: ContainerState;
+  State?: string;
   Status?: string;
 };

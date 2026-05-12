@@ -37,7 +37,7 @@ export type Volume = {
    * The level at which the volume exists. Either `global` for cluster-wide,
    * or `local` for machine level.
    */
-  Scope: "local" | "global";
+  Scope: string;
   /**
    * Low-level details about the volume, provided by the volume driver.
    * Details are returned as a map with key/value pairs:

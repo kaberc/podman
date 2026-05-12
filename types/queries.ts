@@ -96,8 +96,6 @@ export type ContainerKillQuery = {
 export type ContainerListQuery = {
   all?: boolean;
   limit?: number;
-  last?: number;
-  external?: boolean;
   namespace?: boolean;
   pod?: boolean;
   size?: boolean;
@@ -113,10 +111,6 @@ export type ContainerLogsQuery = {
   until?: string;
   timestamps?: boolean;
   tail?: string;
-};
-
-export type ContainerMountQuery = {
-  external?: boolean;
 };
 
 export type ContainerPruneQuery = {
@@ -138,12 +132,10 @@ export type ContainerRenameQuery = {
 export type ContainerResizeQuery = {
   h?: number;
   w?: number;
-  running?: boolean;
 };
 
 export type ContainerRestartQuery = {
   t?: number;
-  timeout?: number;
 };
 
 export type ContainerRestoreQuery = {
@@ -169,7 +161,6 @@ export type ContainerStatsAllQuery = {
   containers?: Array<string>;
   stream?: boolean;
   interval?: number;
-  all?: boolean;
 };
 
 export type ContainerStatsQuery = {
@@ -178,7 +169,7 @@ export type ContainerStatsQuery = {
 
 export type ContainerStopQuery = {
   timeout?: number;
-  ignore?: boolean;
+  Ignore?: boolean;
 };
 
 export type ContainerTopQuery = {
@@ -212,7 +203,6 @@ export type ContainerWaitQuery = {
 export type ExecResizeQuery = {
   h?: number;
   w?: number;
-  running?: boolean;
 };
 
 export type GenerateKubeQuery = {
@@ -246,7 +236,6 @@ export type GenerateSystemdQuery = {
   after?: Array<string>;
   requires?: Array<string>;
   additionalEnvVariables?: Array<string>;
-  templateUnitFile?: boolean;
 };
 
 export type ImageBuildQuery = {
@@ -347,7 +336,6 @@ export type ImagePullQuery = {
   reference?: string;
   quiet?: boolean;
   compatMode?: boolean;
-  pullProgress?: boolean;
   Arch?: string;
   OS?: string;
   Variant?: string;
@@ -380,8 +368,6 @@ export type ImageRemoveAllQuery = {
 
 export type ImageRemoveQuery = {
   force?: boolean;
-  ignore?: boolean;
-  lookupManifest?: boolean;
 };
 
 export type ImageScpQuery = {
@@ -500,10 +486,6 @@ export type ManifestRemoveQuery = {
   ignore?: boolean;
 };
 
-export type NetworkCreateQuery = {
-  ignoreIfExists?: boolean;
-};
-
 export type NetworkListQuery = {
   filters?: string;
 };
@@ -550,14 +532,11 @@ export type PodListQuery = {
 
 export type PodRemoveQuery = {
   force?: boolean;
-  timeout?: number;
 };
 
 export type PodStatsQuery = {
   all?: boolean;
   namesOrIDs?: Array<string>;
-  stream?: boolean;
-  delay?: number;
 };
 
 export type PodStopQuery = {
@@ -598,8 +577,6 @@ export type SecretCreateQuery = {
   driver?: string;
   driveropts?: string;
   labels?: string;
-  replace?: boolean;
-  ignore?: boolean;
 };
 
 export type SecretInspectQuery = {
@@ -628,14 +605,6 @@ export type SystemEventsQuery = {
   stream?: boolean;
 };
 
-export type SystemPruneQuery = {
-  all?: boolean;
-  volumes?: boolean;
-  external?: boolean;
-  build?: boolean;
-  filters?: string;
-};
-
 export type VolumeListQuery = {
   filters?: string;
 };
@@ -646,5 +615,4 @@ export type VolumePruneQuery = {
 
 export type VolumeRemoveQuery = {
   force?: boolean;
-  timeout?: number;
 };

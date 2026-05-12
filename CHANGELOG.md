@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.1
+
+### Fixes
+
+- **Restore typed response shapes for `ListContainer`,
+  `ContainerCreateResponse`, `ListPodsReport`, `SystemDfReport`, and ~40 other
+  schemas** that the 0.4.0 regeneration had collapsed to
+  `Record<string, unknown>`. The Podman v6 swagger generator (master) drops
+  `properties:` for these schemas; the spec source is now pinned to the latest
+  GA release (`swagger-v5.8.2.yaml`), which still emits full property metadata
+  while keeping all Quadlets and Artifacts endpoints.
+
 ## 0.4.0
 
 ### Features

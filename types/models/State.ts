@@ -2,7 +2,6 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ContainerState } from "./ContainerState.ts";
 import type { Health } from "./Health.ts";
 /**
  * State stores container's running state
@@ -20,5 +19,5 @@ export type State = {
   Restarting?: boolean;
   Running?: boolean;
   StartedAt?: string;
-  Status?: ContainerState;
+  Status?: string;
 };

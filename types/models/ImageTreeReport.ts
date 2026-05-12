@@ -2,7 +2,6 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-/**
- * ImageTreeReport provides results from ImageEngine.Tree()
- */
-export type ImageTreeReport = Record<string, unknown>;
+export type ImageTreeReport = {
+  Tree?: string;
+};

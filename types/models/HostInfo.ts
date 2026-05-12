@@ -11,6 +11,7 @@ import type { OCIRuntimeInfo } from "./OCIRuntimeInfo.ts";
 import type { PastaInfo } from "./PastaInfo.ts";
 import type { RemoteSocket } from "./RemoteSocket.ts";
 import type { SecurityInfo } from "./SecurityInfo.ts";
+import type { SlirpInfo } from "./SlirpInfo.ts";
 /**
  * HostInfo describes the libpod host
  */
@@ -42,7 +43,7 @@ export type HostInfo = {
   pasta?: PastaInfo;
   remoteSocket?: RemoteSocket;
   /**
-   * RootlessNetworkCmd returns the default rootless network command (pasta)
+   * RootlessNetworkCmd returns the default rootless network command (slirp4netns or pasta)
    */
   rootlessNetworkCmd?: string;
   runtimeInfo?: Record<string, unknown>;
@@ -51,6 +52,7 @@ export type HostInfo = {
    * ServiceIsRemote is true when the podman/libpod service is remote to the client
    */
   serviceIsRemote?: boolean;
+  slirp4netns?: SlirpInfo;
   swapFree?: number;
   swapTotal?: number;
   uptime?: string;

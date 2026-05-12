@@ -12,8 +12,8 @@ import type { Address } from "./Address.ts";
 export type InspectAdditionalNetwork = {
   /**
    * AdditionalMacAddresses is a set of additional MAC Addresses beyond
-   * the first. The network backend may configure more than one interface
-   * for a single network, which can cause this.
+   * the first. CNI may configure more than one interface for a single
+   * network, which can cause this.
    */
   AdditionalMACAddresses?: Array<string>;
   /**

@@ -2,4 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type PodKillReport = Record<string, unknown>;
+export type PodKillReport = {
+  Errs?: Array<string>;
+  Id?: string;
+};

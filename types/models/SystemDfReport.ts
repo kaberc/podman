@@ -2,7 +2,15 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { SystemDfContainerReport } from "./SystemDfContainerReport.ts";
+import type { SystemDfImageReport } from "./SystemDfImageReport.ts";
+import type { SystemDfVolumeReport } from "./SystemDfVolumeReport.ts";
 /**
- * ServiceOptions provides the input for starting an API and sidecar pprof services
+ * SystemDfReport describes the response for df information
  */
-export type SystemDfReport = Record<string, unknown>;
+export type SystemDfReport = {
+  Containers?: Array<SystemDfContainerReport>;
+  Images?: Array<SystemDfImageReport>;
+  ImagesSize?: number;
+  Volumes?: Array<SystemDfVolumeReport>;
+};

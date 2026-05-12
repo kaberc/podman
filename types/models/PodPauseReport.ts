@@ -2,4 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type PodPauseReport = Record<string, unknown>;
+export type PodPauseReport = {
+  Errs?: Array<string>;
+  Id?: string;
+};

@@ -5,4 +5,7 @@
 /**
  * NetworkRmReport describes the results of network removal
  */
-export type NetworkRmReport = Record<string, unknown>;
+export type NetworkRmReport = {
+  Err?: string;
+  Name?: string;
+};

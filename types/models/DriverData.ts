@@ -3,7 +3,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * DriverData handles the data for a storage driver
+ * DriverData Information about the storage driver used to store the container's and
+ * image's filesystem.
  */
 export type DriverData = {
   /**
