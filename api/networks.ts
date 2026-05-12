@@ -12,7 +12,6 @@ import type {
   NetworkUpdateOptions,
 } from "../types/api.ts";
 
-
 export class NetworksApi {
   #t: Transport;
   constructor(transport: Transport) {
@@ -45,14 +44,13 @@ export class NetworksApi {
   }
 
   /** Remove a network. */
-  async remove(nameOrId: string): Promise<void> {
+  async remove(nameOrId: string): Promise<{ alreadyRemoved: boolean }> {
     const path = `/networks/${encodeURIComponent(nameOrId)}`;
     const { status, json } = await this.#t.request("DELETE", path);
-    if (status !== 200 && status !== 204) {
-      throw createPodmanError(status, json, "DELETE", path);
-    }
+    if (status === 404) return { alreadyRemoved: true };
+    if (status === 200 || status === 204) return { alreadyRemoved: false };
+    throw createPodmanError(status, json, "DELETE", path);
   }
-
 
   /** Check if a network exists. Returns `true` on 204, `false` otherwise. */
   async exists(nameOrId: string): Promise<boolean> {
@@ -68,36 +66,53 @@ export class NetworksApi {
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
   }
   /** Connect a container to a network. */
-  async connect(nameOrId: string, opts: NetworkConnectOptions): Promise<void> {
+  async connect(
+    nameOrId: string,
+    opts: NetworkConnectOptions,
+  ): Promise<{ alreadyConnected: boolean }> {
     const path = `/networks/${encodeURIComponent(nameOrId)}/connect`;
     const res = await this.#t.requestRaw("POST", path, JSON.stringify(opts), {
       "Content-Type": "application/json",
     });
-    if (res.status !== 200) {
-      const text = await res.text();
-      let json: unknown = null;
-      try { json = JSON.parse(text); } catch { /* plain text */ }
-      throw createPodmanError(res.status, json, "POST", path);
+    if (res.status === 200) {
+      await res.body?.cancel();
+      return { alreadyConnected: false };
     }
-    await res.body?.cancel();
+    if (res.status === 409) {
+      await res.body?.cancel();
+      return { alreadyConnected: true };
+    }
+    const text = await res.text();
+    let json: unknown = null;
+    try {
+      json = JSON.parse(text);
+    } catch { /* plain text */ }
+    throw createPodmanError(res.status, json, "POST", path);
   }
 
   /** Disconnect a container from a network. */
   async disconnect(
     nameOrId: string,
     opts: NetworkDisconnectOptions,
-  ): Promise<void> {
+  ): Promise<{ alreadyDisconnected: boolean }> {
     const path = `/networks/${encodeURIComponent(nameOrId)}/disconnect`;
     const res = await this.#t.requestRaw("POST", path, JSON.stringify(opts), {
       "Content-Type": "application/json",
     });
-    if (res.status !== 200) {
-      const text = await res.text();
-      let json: unknown = null;
-      try { json = JSON.parse(text); } catch { /* plain text */ }
-      throw createPodmanError(res.status, json, "POST", path);
+    if (res.status === 200) {
+      await res.body?.cancel();
+      return { alreadyDisconnected: false };
     }
-    await res.body?.cancel();
+    if (res.status === 409) {
+      await res.body?.cancel();
+      return { alreadyDisconnected: true };
+    }
+    const text = await res.text();
+    let json: unknown = null;
+    try {
+      json = JSON.parse(text);
+    } catch { /* plain text */ }
+    throw createPodmanError(res.status, json, "POST", path);
   }
 
   /** Remove unused networks. Returns a list of pruned networks. */

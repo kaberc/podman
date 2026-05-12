@@ -3,10 +3,10 @@ import { createPodmanError, throwRawError } from "../types/errors.ts";
 import { buildQuery } from "../internal/query.ts";
 import type {
   ListQuadlet,
-  QuadletRemoveAllQuery,
-  QuadletRemoveQuery,
   QuadletInstallQuery,
   QuadletListQuery,
+  QuadletRemoveAllQuery,
+  QuadletRemoveQuery,
   QuadletRemoveReport,
 } from "../types/api.ts";
 
@@ -14,7 +14,6 @@ export type QuadletInstallReport = {
   InstalledQuadlets?: Record<string, string>;
   QuadletErrors?: Record<string, string>;
 };
-
 
 export class QuadletsApi {
   #t: Transport;
@@ -43,14 +42,14 @@ export class QuadletsApi {
     return json as QuadletRemoveReport;
   }
 
-  /** Remove a quadlet by name. */
+  /** Remove a quadlet by name. Returns `null` if the quadlet was already absent (HTTP 404). */
   async remove(
     name: string,
     query?: QuadletRemoveQuery,
-  ): Promise<QuadletRemoveReport> {
-    const path =
-      `/quadlets/${encodeURIComponent(name)}${buildQuery(query)}`;
+  ): Promise<QuadletRemoveReport | null> {
+    const path = `/quadlets/${encodeURIComponent(name)}${buildQuery(query)}`;
     const { status, json } = await this.#t.request("DELETE", path);
+    if (status === 404) return null;
     if (status !== 200) throw createPodmanError(status, json, "DELETE", path);
     return json as QuadletRemoveReport;
   }

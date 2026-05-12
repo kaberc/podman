@@ -34,8 +34,8 @@ export {
 
 export type { AuthOption } from "./transport_core.ts";
 
-// All schema types (430+ auto-generated from openapi.ts via --root-types),
-// friendly renames, custom types, and operation query param types.
+// All auto-generated schema types, friendly renames, custom types,
+// and operation query param types.
 export type * from "./types/api.ts";
 
 export { ContainersApi } from "./api/containers.ts";

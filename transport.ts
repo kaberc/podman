@@ -19,8 +19,6 @@ export type {
   TransportResponse,
 } from "./transport_core.ts";
 
-// ─── Unix socket transport ───────────────────────────────────────────────────
-
 export interface TransportOptions {
   socketPath: string;
   apiVersion?: string;
@@ -39,7 +37,7 @@ export function createTransport(opts: TransportOptions): Transport {
 
   const doFetch: DoFetchFn = async (method, path, init) => {
     const signal = init?.signal !== undefined
-      ? (init.signal ?? undefined)
+      ? init.signal
       : AbortSignal.timeout(timeout);
     return await fetch(`${base}${path}`, {
       method,
@@ -52,8 +50,6 @@ export function createTransport(opts: TransportOptions): Transport {
 
   return buildTransport(doFetch, authHeader, () => client.close());
 }
-
-// ─── TCP / TLS transport ─────────────────────────────────────────────────────
 
 export interface TlsOptions {
   /** PEM-encoded CA certificates for verifying the server. */
@@ -79,15 +75,15 @@ export function createTcpTransport(opts: TcpTransportOptions): Transport {
 
   const client = opts.tls
     ? Deno.createHttpClient({
-        caCerts: opts.tls.caCerts,
-        cert: opts.tls.cert,
-        key: opts.tls.key,
-      })
+      caCerts: opts.tls.caCerts,
+      cert: opts.tls.cert,
+      key: opts.tls.key,
+    })
     : undefined;
 
   const doFetch: DoFetchFn = async (method, path, init) => {
     const signal = init?.signal !== undefined
-      ? (init.signal ?? undefined)
+      ? init.signal
       : AbortSignal.timeout(timeout);
     return await fetch(`${base}${path}`, {
       method,

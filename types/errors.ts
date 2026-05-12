@@ -25,7 +25,9 @@ export class PodmanError extends Error {
 
 /** 304 Not Modified — operation was a no-op because the resource is already in the desired state. */
 export class PodmanNotModifiedError extends PodmanError {
-  constructor(opts: { status: number; message: string; method: string; path: string }) {
+  constructor(
+    opts: { status: number; message: string; method: string; path: string },
+  ) {
     super(opts);
     this.name = "PodmanNotModifiedError";
   }
@@ -33,7 +35,9 @@ export class PodmanNotModifiedError extends PodmanError {
 
 /** 401 Unauthorized — missing or invalid credentials. */
 export class PodmanAuthError extends PodmanError {
-  constructor(opts: { status: number; message: string; method: string; path: string }) {
+  constructor(
+    opts: { status: number; message: string; method: string; path: string },
+  ) {
     super(opts);
     this.name = "PodmanAuthError";
   }
@@ -41,7 +45,9 @@ export class PodmanAuthError extends PodmanError {
 
 /** 403 Forbidden — credentials valid but operation not allowed. */
 export class PodmanForbiddenError extends PodmanError {
-  constructor(opts: { status: number; message: string; method: string; path: string }) {
+  constructor(
+    opts: { status: number; message: string; method: string; path: string },
+  ) {
     super(opts);
     this.name = "PodmanForbiddenError";
   }
@@ -49,7 +55,9 @@ export class PodmanForbiddenError extends PodmanError {
 
 /** 404 Not Found — target resource does not exist. */
 export class PodmanNotFoundError extends PodmanError {
-  constructor(opts: { status: number; message: string; method: string; path: string }) {
+  constructor(
+    opts: { status: number; message: string; method: string; path: string },
+  ) {
     super(opts);
     this.name = "PodmanNotFoundError";
   }
@@ -57,7 +65,9 @@ export class PodmanNotFoundError extends PodmanError {
 
 /** 409 Conflict — resource state prevents the operation. */
 export class PodmanConflictError extends PodmanError {
-  constructor(opts: { status: number; message: string; method: string; path: string }) {
+  constructor(
+    opts: { status: number; message: string; method: string; path: string },
+  ) {
     super(opts);
     this.name = "PodmanConflictError";
   }
@@ -65,7 +75,9 @@ export class PodmanConflictError extends PodmanError {
 
 /** 5xx — server-side failure (libpod error, storage error, etc.). */
 export class PodmanServerError extends PodmanError {
-  constructor(opts: { status: number; message: string; method: string; path: string }) {
+  constructor(
+    opts: { status: number; message: string; method: string; path: string },
+  ) {
     super(opts);
     this.name = "PodmanServerError";
   }

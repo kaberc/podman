@@ -1,25 +1,85 @@
 // Friendly aliases for awkwardly-named schemas, custom types not in the OpenAPI spec,
-// and schema overrides. Query param types are auto-generated in openapi.ts.
+// and schema overrides. Query param types are auto-generated in queries.ts.
 //
-// Run `deno task generate-types` to regenerate types/openapi.ts from Podman's swagger spec.
+// Run `deno task generate-types` to regenerate split OpenAPI types from Podman's swagger spec.
 
+// Re-export all auto-generated schema and query types so importers only need this file.
+export type * from "./models/index.ts";
+export type * from "./queries.ts";
 
-// Re-export all auto-generated schema types so importers only need this file.
-export type * from "./openapi.ts";
-
-import type { components, Mount } from "./openapi.ts";
+import type {
+  ComponentVersion,
+  ContainersPruneReportLibpod,
+  ContainerTopOKBody,
+  DisconnectRequest,
+  HistoryResponse,
+  LibpodImageSummary,
+  Mount,
+  networkCreateLibpod,
+  PruneReport,
+  Schema2List,
+  SecretInfoReport as _SecretInfoReport,
+  SpecGenerator as _SpecGenerator,
+} from "./models/index.ts";
 
 // ─── Schema renames (spec name → friendly name) ───
 
-export type ContainerTopResponse = components["schemas"]["ContainerTopOKBody"];
-export type ContainersPruneReport = components["schemas"]["ContainersPruneReportLibpod"];
-export type ImageSummary = components["schemas"]["LibpodImageSummary"];
-export type ImageRemoveReport = components["schemas"]["LibpodImagesRemoveReport"];
-export type ImageHistory = components["schemas"]["HistoryResponse"];
-export type ImagePruneReport = components["schemas"]["PruneReport"];
-export type NetworkCreateOptions = components["schemas"]["networkCreateLibpod"];
-export type NetworkDisconnectOptions = components["schemas"]["DisconnectOptions"];
-export type VolumePruneReport = components["schemas"]["PruneReport"];
+export type ContainerTopResponse = ContainerTopOKBody;
+export type ContainersPruneReport = ContainersPruneReportLibpod;
+export type ImageSummary = LibpodImageSummary;
+export type ImageRemoveReport = {
+  Deleted?: string[];
+  Untagged?: string[];
+  Errors?: string[];
+  ExitCode?: number;
+};
+export type ImageHistory = HistoryResponse;
+export type ImagePruneReport = PruneReport;
+export type NetworkCreateOptions = networkCreateLibpod;
+export type NetworkDisconnectOptions = DisconnectRequest;
+export type VolumePruneReport = PruneReport;
+
+export type PlayKubeResourceReport = {
+  ID?: string;
+  Name?: string;
+  [key: string]: unknown;
+};
+
+export type PlayKubeReport = {
+  Pods?: PlayKubeResourceReport[];
+  Containers?: PlayKubeResourceReport[];
+  Volumes?: PlayKubeResourceReport[];
+  Secrets?: PlayKubeResourceReport[];
+  Services?: PlayKubeResourceReport[];
+  ServiceContainerID?: string;
+  ExitCode?: number;
+  [key: string]: unknown;
+};
+
+export type ManifestDescriptor = {
+  mediaType?: string;
+  digest?: string;
+  size?: number;
+  platform?: {
+    architecture?: string;
+    os?: string;
+    variant?: string;
+    [key: string]: unknown;
+  };
+  annotations?: Record<string, string>;
+  urls?: string[];
+  [key: string]: unknown;
+};
+
+export type Schema2ListPublic = Schema2List & {
+  manifests?: ManifestDescriptor[];
+};
+export type SecretInfoReport = _SecretInfoReport & {
+  Spec?: { Name?: string; [key: string]: unknown };
+};
+export type SystemComponentVersion = ComponentVersion & {
+  Version?: string;
+};
 
 // ─── Schema overrides ───
 
@@ -33,18 +93,21 @@ export type OciMount = {
   options?: string[];
 };
 
-type _SpecGenerator = components["schemas"]["SpecGenerator"];
 export type SpecGenerator = Omit<_SpecGenerator, "mounts"> & {
   mounts?: (Mount | OciMount)[];
 };
 
 // ─── Response-derived types ───
 
-export type ImageSearchResult = NonNullable<
-  components["responses"]["registrySearchResponse"]["content"][
-    "application/json"
-  ]
->;
+export type ImageSearchResult = {
+  Description?: string;
+  Index?: string;
+  IsAutomated?: boolean;
+  Name?: string;
+  Official?: string | boolean;
+  Stars?: number;
+  Tag?: string;
+};
 
 // ─── Custom types (not in OpenAPI spec) ───
 

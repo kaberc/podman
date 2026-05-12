@@ -5,15 +5,14 @@ import type {
   IDResponse,
   ImageRemoveReport,
   ManifestCreateQuery,
-  ManifestRemoveQuery,
   ManifestInspectQuery,
   ManifestModifyOptions,
   ManifestModifyQuery,
   ManifestModifyReport,
   ManifestPushQuery,
+  ManifestRemoveQuery,
   Schema2ListPublic,
 } from "../types/api.ts";
-
 
 export class ManifestsApi {
   #t: Transport;
@@ -29,7 +28,9 @@ export class ManifestsApi {
   ): Promise<IDResponse> {
     const path = `/manifests/${encodeURIComponent(name)}${buildQuery(query)}`;
     const { status, json } = await this.#t.request("POST", path, opts);
-    if (status !== 200 && status !== 201) throw createPodmanError(status, json, "POST", path);
+    if (status !== 200 && status !== 201) {
+      throw createPodmanError(status, json, "POST", path);
+    }
     return json as IDResponse;
   }
 
@@ -38,7 +39,9 @@ export class ManifestsApi {
     nameOrId: string,
     query?: ManifestInspectQuery,
   ): Promise<Schema2ListPublic | null> {
-    const path = `/manifests/${encodeURIComponent(nameOrId)}/json${buildQuery(query)}`;
+    const path = `/manifests/${encodeURIComponent(nameOrId)}/json${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("GET", path);
     if (status === 404) return null;
     if (status !== 200) throw createPodmanError(status, json, "GET", path);
@@ -58,7 +61,9 @@ export class ManifestsApi {
     opts: ManifestModifyOptions,
     query?: ManifestModifyQuery,
   ): Promise<ManifestModifyReport> {
-    const path = `/manifests/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
+    const path = `/manifests/${encodeURIComponent(nameOrId)}${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("PUT", path, opts);
     if (status !== 200) throw createPodmanError(status, json, "PUT", path);
     return json as ManifestModifyReport;
@@ -68,9 +73,12 @@ export class ManifestsApi {
   async remove(
     nameOrId: string,
     query?: ManifestRemoveQuery,
-  ): Promise<ImageRemoveReport> {
-    const path = `/manifests/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
+  ): Promise<ImageRemoveReport | null> {
+    const path = `/manifests/${encodeURIComponent(nameOrId)}${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("DELETE", path);
+    if (status === 404) return null;
     if (status !== 200) throw createPodmanError(status, json, "DELETE", path);
     return json as ImageRemoveReport;
   }
@@ -81,7 +89,9 @@ export class ManifestsApi {
     destination: string,
     query?: ManifestPushQuery,
   ): Promise<IDResponse> {
-    const path = `/manifests/${encodeURIComponent(nameOrId)}/push/${encodeURIComponent(destination)}${buildQuery(query)}`;
+    const path = `/manifests/${encodeURIComponent(nameOrId)}/push/${
+      encodeURIComponent(destination)
+    }${buildQuery(query)}`;
     const headers: Record<string, string> = {};
     const authHeader = this.#t.getAuthHeader();
     if (authHeader) headers["X-Registry-Auth"] = authHeader;

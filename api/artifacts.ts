@@ -4,7 +4,6 @@ import { buildQuery } from "../internal/query.ts";
 import type {
   ArtifactAddQuery,
   ArtifactAddReport,
-  ArtifactRemoveAllQuery,
   ArtifactExtractQuery,
   ArtifactInspectReport,
   ArtifactListReport,
@@ -13,9 +12,9 @@ import type {
   ArtifactPullReport,
   ArtifactPushQuery,
   ArtifactPushReport,
+  ArtifactRemoveAllQuery,
   ArtifactRemoveReport,
 } from "../types/api.ts";
-
 
 export class ArtifactsApi {
   #t: Transport;
@@ -24,9 +23,10 @@ export class ArtifactsApi {
   }
 
   /** Remove a single artifact by name or ID. */
-  async remove(nameOrId: string): Promise<ArtifactRemoveReport> {
+  async remove(nameOrId: string): Promise<ArtifactRemoveReport | null> {
     const path = `/artifacts/${encodeURIComponent(nameOrId)}`;
     const { status, json } = await this.#t.request("DELETE", path);
+    if (status === 404) return null;
     if (status !== 200) throw createPodmanError(status, json, "DELETE", path);
     return json as ArtifactRemoveReport;
   }
@@ -36,8 +36,9 @@ export class ArtifactsApi {
     nameOrId: string,
     query?: ArtifactExtractQuery,
   ): Promise<ReadableStream<Uint8Array>> {
-    const path =
-      `/artifacts/${encodeURIComponent(nameOrId)}/extract${buildQuery(query)}`;
+    const path = `/artifacts/${encodeURIComponent(nameOrId)}/extract${
+      buildQuery(query)
+    }`;
     return await this.#t.requestStream("GET", path);
   }
 
@@ -55,8 +56,9 @@ export class ArtifactsApi {
     nameOrId: string,
     query?: ArtifactPushQuery,
   ): Promise<ArtifactPushReport> {
-    const path =
-      `/artifacts/${encodeURIComponent(nameOrId)}/push${buildQuery(query)}`;
+    const path = `/artifacts/${encodeURIComponent(nameOrId)}/push${
+      buildQuery(query)
+    }`;
     const headers: Record<string, string> = {};
     const authHeader = this.#t.getAuthHeader();
     if (authHeader) headers["X-Registry-Auth"] = authHeader;
@@ -106,7 +108,9 @@ export class ArtifactsApi {
   }
 
   /** Remove one or more artifacts. */
-  async removeAll(query?: ArtifactRemoveAllQuery): Promise<ArtifactRemoveReport> {
+  async removeAll(
+    query?: ArtifactRemoveAllQuery,
+  ): Promise<ArtifactRemoveReport> {
     const path = `/artifacts/remove${buildQuery(query)}`;
     const { status, json } = await this.#t.request("DELETE", path);
     if (status !== 200) throw createPodmanError(status, json, "DELETE", path);

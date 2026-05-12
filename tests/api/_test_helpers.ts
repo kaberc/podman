@@ -33,6 +33,8 @@ export function mockTransport(
       return Promise.resolve(new ReadableStream<Uint8Array>());
     },
     close() {},
-    getAuthHeader() { return undefined; },
+    getAuthHeader() {
+      return undefined;
+    },
   };
 }

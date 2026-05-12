@@ -4,10 +4,10 @@ import { buildQuery } from "../internal/query.ts";
 import type {
   SecretCreateQuery,
   SecretCreateReport,
-  SecretRemoveQuery,
   SecretInfoReport,
   SecretInspectQuery,
   SecretListQuery,
+  SecretRemoveQuery,
 } from "../types/api.ts";
 
 export class SecretsApi {
@@ -25,7 +25,9 @@ export class SecretsApi {
     const res = await this.#t.requestRaw("POST", path, data, {
       "Content-Type": "application/json",
     });
-    if (res.status !== 200 && res.status !== 201) await throwRawError(res, "POST", path);
+    if (res.status !== 200 && res.status !== 201) {
+      await throwRawError(res, "POST", path);
+    }
     return (await res.json()) as SecretCreateReport;
   }
 
@@ -34,8 +36,9 @@ export class SecretsApi {
     nameOrId: string,
     query?: SecretInspectQuery,
   ): Promise<SecretInfoReport | null> {
-    const path =
-      `/secrets/${encodeURIComponent(nameOrId)}/json${buildQuery(query)}`;
+    const path = `/secrets/${encodeURIComponent(nameOrId)}/json${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("GET", path);
     if (status === 404) return null;
     if (status !== 200) throw createPodmanError(status, json, "GET", path);
@@ -50,15 +53,16 @@ export class SecretsApi {
     return (json ?? []) as SecretInfoReport[];
   }
 
-  /** Remove a secret. */
+  /** Remove a secret. Idempotent; returns `{ alreadyRemoved }`. */
   async remove(
     nameOrId: string,
     query?: SecretRemoveQuery,
-  ): Promise<void> {
-    const path =
-      `/secrets/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
+  ): Promise<{ alreadyRemoved: boolean }> {
+    const path = `/secrets/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
     const { status, json } = await this.#t.request("DELETE", path);
-    if (status !== 204) throw createPodmanError(status, json, "DELETE", path);
+    if (status === 404) return { alreadyRemoved: true };
+    if (status === 204) return { alreadyRemoved: false };
+    throw createPodmanError(status, json, "DELETE", path);
   }
 
   /** Check if a secret exists. Returns `true` on 204, `false` otherwise. */

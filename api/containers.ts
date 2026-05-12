@@ -2,14 +2,13 @@ import type { Transport } from "../transport.ts";
 import { createPodmanError, throwRawError } from "../types/errors.ts";
 import { buildQuery } from "../internal/query.ts";
 import type {
-  ContainerArchiveQuery,
   ContainerArchivePutQuery,
+  ContainerArchiveQuery,
   ContainerAttachQuery,
   ContainerChange,
   ContainerChangesQuery,
   ContainerCheckpointQuery,
   ContainerCreateResponse,
-  ContainerStatsAllQuery,
   ContainerKillQuery,
   ContainerListQuery,
   ContainerLogsQuery,
@@ -19,6 +18,7 @@ import type {
   ContainerRestartQuery,
   ContainerRestoreQuery,
   ContainersPruneReport,
+  ContainerStatsAllQuery,
   ContainerStatsQuery,
   ContainerStopQuery,
   ContainerTopQuery,
@@ -79,8 +79,9 @@ export class ContainersApi {
     nameOrId: string,
     query?: ContainerStopQuery,
   ): Promise<{ alreadyStopped: boolean }> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/stop${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/stop${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path);
     if (status === 204) return { alreadyStopped: false };
     if (status === 304) return { alreadyStopped: true };
@@ -92,21 +93,25 @@ export class ContainersApi {
     nameOrId: string,
     query?: ContainerRestartQuery,
   ): Promise<void> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/restart${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/restart${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path);
     if (status !== 204) throw createPodmanError(status, json, "POST", path);
   }
 
-  /** Send a signal to a container (default SIGTERM). */
+  /** Send a signal to a container (default SIGTERM). Idempotent; returns `{ wasRunning }` (false on HTTP 409, container not running). */
   async kill(
     nameOrId: string,
     query?: ContainerKillQuery,
-  ): Promise<void> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/kill${buildQuery(query)}`;
+  ): Promise<{ wasRunning: boolean }> {
+    const path = `/containers/${encodeURIComponent(nameOrId)}/kill${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path);
-    if (status !== 204) throw createPodmanError(status, json, "POST", path);
+    if (status === 204) return { wasRunning: true };
+    if (status === 409) return { wasRunning: false };
+    throw createPodmanError(status, json, "POST", path);
   }
 
   /** Pause all processes in a container. */
@@ -123,17 +128,18 @@ export class ContainersApi {
     if (status !== 204) throw createPodmanError(status, json, "POST", path);
   }
 
-  /** Remove a container. Use query options to force-remove or remove volumes. */
+  /** Remove a container. Idempotent; returns `{ alreadyRemoved }`. */
   async remove(
     nameOrId: string,
     query?: ContainerRemoveQuery,
-  ): Promise<void> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
+  ): Promise<{ alreadyRemoved: boolean }> {
+    const path = `/containers/${encodeURIComponent(nameOrId)}${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("DELETE", path);
-    if (status !== 200 && status !== 204) {
-      throw createPodmanError(status, json, "DELETE", path);
-    }
+    if (status === 404) return { alreadyRemoved: true };
+    if (status === 200 || status === 204) return { alreadyRemoved: false };
+    throw createPodmanError(status, json, "DELETE", path);
   }
 
   /** Stream container logs as raw bytes. */
@@ -141,8 +147,9 @@ export class ContainersApi {
     nameOrId: string,
     query?: ContainerLogsQuery,
   ): Promise<ReadableStream<Uint8Array>> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/logs${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/logs${
+      buildQuery(query)
+    }`;
     return await this.#t.requestStream("GET", path);
   }
 
@@ -151,8 +158,9 @@ export class ContainersApi {
     nameOrId: string,
     query?: ContainerTopQuery,
   ): Promise<ContainerTopResponse> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/top${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/top${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("GET", path);
     if (status !== 200) throw createPodmanError(status, json, "GET", path);
     return json as ContainerTopResponse;
@@ -163,8 +171,9 @@ export class ContainersApi {
     nameOrId: string,
     query?: ContainerWaitQuery,
   ): Promise<number> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/wait${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/wait${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path);
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
     return json as number;
@@ -184,8 +193,9 @@ export class ContainersApi {
     nameOrId: string,
     query: ContainerResizeQuery,
   ): Promise<void> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/resize${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/resize${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path);
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
   }
@@ -201,10 +211,9 @@ export class ContainersApi {
     nameOrId: string,
     query?: ContainerCheckpointQuery,
   ): Promise<void> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/checkpoint${
-        buildQuery(query)
-      }`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/checkpoint${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path);
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
   }
@@ -214,10 +223,9 @@ export class ContainersApi {
     nameOrId: string,
     query?: ContainerRestoreQuery,
   ): Promise<void> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/restore${
-        buildQuery(query)
-      }`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/restore${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path);
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
   }
@@ -242,8 +250,9 @@ export class ContainersApi {
     nameOrId: string,
     query?: ContainerStatsQuery,
   ): Promise<ReadableStream<Uint8Array>> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/stats${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/stats${
+      buildQuery(query)
+    }`;
     return await this.#t.requestStream("GET", path);
   }
 
@@ -252,8 +261,9 @@ export class ContainersApi {
     nameOrId: string,
     query?: ContainerAttachQuery,
   ): Promise<ReadableStream<Uint8Array>> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/attach${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/attach${
+      buildQuery(query)
+    }`;
     return await this.#t.requestStream("POST", path);
   }
 
@@ -262,8 +272,9 @@ export class ContainersApi {
     nameOrId: string,
     query: ContainerArchiveQuery,
   ): Promise<ReadableStream<Uint8Array>> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/archive${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/archive${
+      buildQuery(query)
+    }`;
     return await this.#t.requestStream("GET", path);
   }
 
@@ -273,8 +284,9 @@ export class ContainersApi {
     body: ReadableStream<Uint8Array>,
     query: ContainerArchivePutQuery,
   ): Promise<void> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/archive${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/archive${
+      buildQuery(query)
+    }`;
     const res = await this.#t.requestRaw("PUT", path, body, {
       "Content-Type": "application/x-tar",
     });
@@ -305,8 +317,9 @@ export class ContainersApi {
     resources: UpdateEntities,
     query?: ContainerUpdateQuery,
   ): Promise<void> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/update${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/update${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path, resources);
     if (status !== 201) throw createPodmanError(status, json, "POST", path);
   }
@@ -316,8 +329,9 @@ export class ContainersApi {
     nameOrId: string,
     query?: ContainerChangesQuery,
   ): Promise<ContainerChange[]> {
-    const path =
-      `/containers/${encodeURIComponent(nameOrId)}/changes${buildQuery(query)}`;
+    const path = `/containers/${encodeURIComponent(nameOrId)}/changes${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("GET", path);
     if (status !== 200) throw createPodmanError(status, json, "GET", path);
     return (json ?? []) as ContainerChange[];

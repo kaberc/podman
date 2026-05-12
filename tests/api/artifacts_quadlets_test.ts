@@ -12,7 +12,15 @@ Deno.test("artifacts.remove: returns report on 200", async () => {
     })),
   );
   const result = await api.remove("myart");
-  assertEquals(result.ArtifactDigests, ["sha256:abc"]);
+  assertEquals(result?.ArtifactDigests, ["sha256:abc"]);
+});
+
+Deno.test("artifacts.remove: returns null on 404", async () => {
+  const api = new ArtifactsApi(
+    mockTransport(() => ({ status: 404, json: { message: "not found" } })),
+  );
+  const result = await api.remove("myart");
+  assertEquals(result, null);
 });
 
 Deno.test("artifacts.remove: throws PodmanError on error", async () => {
@@ -282,8 +290,16 @@ Deno.test("quadlets.remove: returns report on 200", async () => {
     }),
   );
   const result = await api.remove("test.container");
-  assertEquals(result.Removed, ["test.container"]);
+  assertEquals(result?.Removed, ["test.container"]);
   assertEquals(capturedPath.includes("/quadlets/test.container"), true);
+});
+
+Deno.test("quadlets.remove: returns null on 404", async () => {
+  const api = new QuadletsApi(
+    mockTransport(() => ({ status: 404, json: { message: "not found" } })),
+  );
+  const result = await api.remove("test.container");
+  assertEquals(result, null);
 });
 
 Deno.test("quadlets.exists: returns true on 204, false on 404", async () => {

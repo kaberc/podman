@@ -7,10 +7,6 @@ import { VolumesApi } from "../../api/volumes.ts";
 import { SystemApi } from "../../api/system.ts";
 import { mockTransport } from "./_test_helpers.ts";
 
-// ---------------------------------------------------------------------------
-// Networks — untested methods
-// ---------------------------------------------------------------------------
-
 Deno.test("networks.exists: returns true on 204, false on 404", async () => {
   const apiTrue = new NetworksApi(
     mockTransport(() => ({ status: 204, json: null })),
@@ -45,10 +41,6 @@ Deno.test("networks.update: throws PodmanError on 500", async () => {
   );
   assertEquals(err.status, 500);
 });
-
-// ---------------------------------------------------------------------------
-// System — untested methods
-// ---------------------------------------------------------------------------
 
 Deno.test("system.df: returns SystemDfReport on 200", async () => {
   const api = new SystemApi(
@@ -100,10 +92,6 @@ Deno.test("system.check: passes query params", async () => {
   await api.check({ quick: true } as never);
   assertEquals(capturedPath.includes("quick=true"), true);
 });
-
-// ---------------------------------------------------------------------------
-// Containers — untested methods
-// ---------------------------------------------------------------------------
 
 Deno.test("containers.mount: returns mount path on 200", async () => {
   const api = new ContainersApi(
@@ -208,10 +196,6 @@ Deno.test("containers.statsAll: passes query params", async () => {
   assertEquals(capturedPath.includes("stream=true"), true);
 });
 
-// ---------------------------------------------------------------------------
-// Images — untested methods
-// ---------------------------------------------------------------------------
-
 Deno.test("images.load: returns ImageLoadReport on 200", async () => {
   const api = new ImagesApi(
     mockTransport(() => ({ status: 200, json: null }), {
@@ -298,7 +282,10 @@ Deno.test("images.changes: returns empty array on null json", async () => {
 
 Deno.test("images.resolve: returns full name on 200", async () => {
   const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: "docker.io/library/alpine:latest" })),
+    mockTransport(() => ({
+      status: 200,
+      json: "docker.io/library/alpine:latest",
+    })),
   );
   const result = await api.resolve("alpine");
   assertEquals(result, "docker.io/library/alpine:latest");
@@ -406,10 +393,6 @@ Deno.test("images.scp: path includes nameOrId", async () => {
   );
 });
 
-// ---------------------------------------------------------------------------
-// Images — loadLocal / buildLocal (local file operations)
-// ---------------------------------------------------------------------------
-
 Deno.test("images.loadLocal: returns ImageLoadReport on 200", async () => {
   let capturedPath = "";
   const api = new ImagesApi(
@@ -475,8 +458,7 @@ Deno.test("images.buildLocal: throws PodmanError on 400", async () => {
 Deno.test("images.buildLocal: throws on missing response body", async () => {
   const api = new ImagesApi(
     mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, _p, _b, _h) =>
-        new Response(null, { status: 200 }),
+      requestRaw: async (_m, _p, _b, _h) => new Response(null, { status: 200 }),
     }),
   );
   await assertRejects(
@@ -485,10 +467,6 @@ Deno.test("images.buildLocal: throws on missing response body", async () => {
     "No response body for build",
   );
 });
-
-// ---------------------------------------------------------------------------
-// Volumes — untested methods
-// ---------------------------------------------------------------------------
 
 Deno.test("volumes.export: returns stream with correct path", async () => {
   let capturedPath = "";

@@ -3,14 +3,13 @@ import { createPodmanError } from "../types/errors.ts";
 import { buildQuery } from "../internal/query.ts";
 import type {
   LibpodInfo,
-  SystemComponentVersion,
-  SystemDfReport,
   SystemCheckQuery,
   SystemCheckReport,
+  SystemComponentVersion,
+  SystemDfReport,
   SystemEventsQuery,
   SystemPruneReport,
 } from "../types/api.ts";
-
 
 export class SystemApi {
   #t: Transport;

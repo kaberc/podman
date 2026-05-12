@@ -153,14 +153,24 @@ Deno.test("containers.remove: succeeds on 200", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 200, json: null })),
   );
-  await api.remove("abc123");
+  const result = await api.remove("abc123");
+  assertEquals(result.alreadyRemoved, false);
 });
 
 Deno.test("containers.remove: succeeds on 204", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 204, json: null })),
   );
-  await api.remove("abc123");
+  const result = await api.remove("abc123");
+  assertEquals(result.alreadyRemoved, false);
+});
+
+Deno.test("containers.remove: returns alreadyRemoved on 404", async () => {
+  const api = new ContainersApi(
+    mockTransport(() => ({ status: 404, json: { message: "not found" } })),
+  );
+  const result = await api.remove("abc123");
+  assertEquals(result.alreadyRemoved, true);
 });
 
 Deno.test("containers.remove: passes force query", async () => {
@@ -179,7 +189,16 @@ Deno.test("containers.kill: succeeds on 204", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 204, json: null })),
   );
-  await api.kill("abc123");
+  const result = await api.kill("abc123");
+  assertEquals(result.wasRunning, true);
+});
+
+Deno.test("containers.kill: returns not running on 409", async () => {
+  const api = new ContainersApi(
+    mockTransport(() => ({ status: 409, json: { message: "not running" } })),
+  );
+  const result = await api.kill("abc123");
+  assertEquals(result.wasRunning, false);
 });
 
 Deno.test("containers.kill: passes signal query", async () => {
@@ -329,7 +348,15 @@ Deno.test("images.remove: returns report on 200", async () => {
     })),
   );
   const result = await api.remove("alpine");
-  assertEquals(result.Deleted?.length, 1);
+  assertEquals(result?.Deleted?.length, 1);
+});
+
+Deno.test("images.remove: returns null on 404", async () => {
+  const api = new ImagesApi(
+    mockTransport(() => ({ status: 404, json: { message: "not found" } })),
+  );
+  const result = await api.remove("missing");
+  assertEquals(result, null);
 });
 
 Deno.test("images.tag: succeeds on 201", async () => {
@@ -455,14 +482,24 @@ Deno.test("networks.remove: succeeds on 200", async () => {
   const api = new NetworksApi(
     mockTransport(() => ({ status: 200, json: null })),
   );
-  await api.remove("test-net");
+  const result = await api.remove("test-net");
+  assertEquals(result.alreadyRemoved, false);
 });
 
 Deno.test("networks.remove: succeeds on 204", async () => {
   const api = new NetworksApi(
     mockTransport(() => ({ status: 204, json: null })),
   );
-  await api.remove("test-net");
+  const result = await api.remove("test-net");
+  assertEquals(result.alreadyRemoved, false);
+});
+
+Deno.test("networks.remove: returns alreadyRemoved on 404", async () => {
+  const api = new NetworksApi(
+    mockTransport(() => ({ status: 404, json: { message: "not found" } })),
+  );
+  const result = await api.remove("test-net");
+  assertEquals(result.alreadyRemoved, true);
 });
 
 Deno.test("networks.connect: succeeds on 200", async () => {
@@ -475,16 +512,52 @@ Deno.test("networks.connect: succeeds on 200", async () => {
       },
     }),
   );
-  await api.connect("test-net", { container: "abc123" } as never);
+  const result = await api.connect(
+    "test-net",
+    { container: "abc123" } as never,
+  );
   assertEquals(JSON.parse(capturedBody!).container, "abc123");
+  assertEquals(result.alreadyConnected, false);
 });
+
+Deno.test("networks.connect: returns alreadyConnected on 409", async () => {
+  const api = new NetworksApi(
+    mockTransport(() => ({ status: 200, json: null }), {
+      requestRaw: async () =>
+        new Response("already connected", { status: 409 }),
+    }),
+  );
+  const result = await api.connect(
+    "test-net",
+    { container: "abc123" } as never,
+  );
+  assertEquals(result.alreadyConnected, true);
+});
+
 Deno.test("networks.disconnect: succeeds on 200", async () => {
   const api = new NetworksApi(
     mockTransport(() => ({ status: 200, json: null }), {
       requestRaw: async () => new Response("OK", { status: 200 }),
     }),
   );
-  await api.disconnect("test-net", { container: "abc123" } as never);
+  const result = await api.disconnect(
+    "test-net",
+    { container: "abc123" } as never,
+  );
+  assertEquals(result.alreadyDisconnected, false);
+});
+
+Deno.test("networks.disconnect: returns alreadyDisconnected on 409", async () => {
+  const api = new NetworksApi(
+    mockTransport(() => ({ status: 200, json: null }), {
+      requestRaw: async () => new Response("not connected", { status: 409 }),
+    }),
+  );
+  const result = await api.disconnect(
+    "test-net",
+    { container: "abc123" } as never,
+  );
+  assertEquals(result.alreadyDisconnected, true);
 });
 
 Deno.test("networks.prune: returns reports on 200", async () => {
@@ -522,11 +595,6 @@ Deno.test("API error includes correct method and path", async () => {
   assertEquals(err.method, "POST");
   assertEquals(err.path, "/containers/mycontainer/start");
 });
-
-
-// ---------------------------------------------------------------------------
-// URL Encoding Tests
-// ---------------------------------------------------------------------------
 
 Deno.test("containers.inspect: URL-encodes slashes in nameOrId", async () => {
   let capturedPath = "";
@@ -575,10 +643,6 @@ Deno.test("volumes.inspect: URL-encodes slashes in nameOrId", async () => {
   await api.inspect("my/vol");
   assertEquals(capturedPath, "/volumes/my%2Fvol/json");
 });
-
-// ---------------------------------------------------------------------------
-// Containers — previously untested methods
-// ---------------------------------------------------------------------------
 
 Deno.test("containers.logs: returns ReadableStream with correct path", async () => {
   let capturedPath = "";
@@ -686,10 +750,6 @@ Deno.test("containers.restart: passes timeout query", async () => {
   await api.restart("abc", { timeout: 5 } as never);
   assertEquals(capturedPath, "/containers/abc/restart?timeout=5");
 });
-
-// ---------------------------------------------------------------------------
-// Images — previously untested methods
-// ---------------------------------------------------------------------------
 
 Deno.test("images.push: succeeds on 200", async () => {
   const api = new ImagesApi(
@@ -819,10 +879,6 @@ Deno.test("images.build: throws on 400+", async () => {
   assertEquals(err.status, 400);
 });
 
-// ---------------------------------------------------------------------------
-// VolumesApi Tests
-// ---------------------------------------------------------------------------
-
 Deno.test("volumes.create: returns volume on 201", async () => {
   const api = new VolumesApi(
     mockTransport(() => ({
@@ -898,7 +954,16 @@ Deno.test("volumes.remove: succeeds on 204", async () => {
   const api = new VolumesApi(
     mockTransport(() => ({ status: 204, json: null })),
   );
-  await api.remove("myvol");
+  const result = await api.remove("myvol");
+  assertEquals(result.alreadyRemoved, false);
+});
+
+Deno.test("volumes.remove: returns alreadyRemoved on 404", async () => {
+  const api = new VolumesApi(
+    mockTransport(() => ({ status: 404, json: { message: "not found" } })),
+  );
+  const result = await api.remove("myvol");
+  assertEquals(result.alreadyRemoved, true);
 });
 
 Deno.test("volumes.remove: throws on 500", async () => {
@@ -943,10 +1008,6 @@ Deno.test("volumes.prune: returns array on 200", async () => {
   const result = await api.prune();
   assertEquals(result.length, 1);
 });
-
-// ---------------------------------------------------------------------------
-// PodsApi Tests
-// ---------------------------------------------------------------------------
 
 Deno.test("pods.create: returns IDResponse on 201", async () => {
   const api = new PodsApi(
@@ -1042,7 +1103,15 @@ Deno.test("pods.remove: returns PodRmReport on 200", async () => {
     })),
   );
   const result = await api.remove("mypod");
-  assertEquals(result.Id, "pod123");
+  assertEquals(result?.Id, "pod123");
+});
+
+Deno.test("pods.remove: returns null on 404", async () => {
+  const api = new PodsApi(
+    mockTransport(() => ({ status: 404, json: { message: "not found" } })),
+  );
+  const result = await api.remove("mypod");
+  assertEquals(result, null);
 });
 
 Deno.test("pods.remove: passes force query", async () => {
@@ -1159,7 +1228,15 @@ Deno.test("pods.kill: returns report on 200", async () => {
     })),
   );
   const result = await api.kill("mypod");
-  assertEquals(result.Id, "pod123");
+  assertEquals(result?.Id, "pod123");
+});
+
+Deno.test("pods.kill: returns null on 409", async () => {
+  const api = new PodsApi(
+    mockTransport(() => ({ status: 409, json: { message: "not running" } })),
+  );
+  const result = await api.kill("mypod");
+  assertEquals(result, null);
 });
 
 Deno.test("pods.kill: passes signal query", async () => {
@@ -1193,7 +1270,15 @@ Deno.test("pods.pause: returns report on 200", async () => {
     })),
   );
   const result = await api.pause("mypod");
-  assertEquals(result.Id, "pod123");
+  assertEquals(result?.Id, "pod123");
+});
+
+Deno.test("pods.pause: returns null on 409", async () => {
+  const api = new PodsApi(
+    mockTransport(() => ({ status: 409, json: { message: "already paused" } })),
+  );
+  const result = await api.pause("mypod");
+  assertEquals(result, null);
 });
 
 Deno.test("pods.unpause: returns report on 200", async () => {
@@ -1204,7 +1289,18 @@ Deno.test("pods.unpause: returns report on 200", async () => {
     })),
   );
   const result = await api.unpause("mypod");
-  assertEquals(result.Id, "pod123");
+  assertEquals(result?.Id, "pod123");
+});
+
+Deno.test("pods.unpause: returns null on 409", async () => {
+  const api = new PodsApi(
+    mockTransport(() => ({
+      status: 409,
+      json: { message: "already unpaused" },
+    })),
+  );
+  const result = await api.unpause("mypod");
+  assertEquals(result, null);
 });
 
 Deno.test("pods.top: returns PodTopOKBody on 200", async () => {
@@ -1278,10 +1374,6 @@ Deno.test("pods.prune: returns report on 200", async () => {
   const result = await api.prune();
   assertEquals(result.Id, "pod123");
 });
-
-// ---------------------------------------------------------------------------
-// SecretsApi Tests
-// ---------------------------------------------------------------------------
 
 Deno.test("secrets.create: returns report on 201", async () => {
   const api = new SecretsApi(
@@ -1364,7 +1456,16 @@ Deno.test("secrets.remove: succeeds on 204", async () => {
   const api = new SecretsApi(
     mockTransport(() => ({ status: 204, json: null })),
   );
-  await api.remove("sec1");
+  const result = await api.remove("sec1");
+  assertEquals(result.alreadyRemoved, false);
+});
+
+Deno.test("secrets.remove: returns alreadyRemoved on 404", async () => {
+  const api = new SecretsApi(
+    mockTransport(() => ({ status: 404, json: { message: "not found" } })),
+  );
+  const result = await api.remove("sec1");
+  assertEquals(result.alreadyRemoved, true);
 });
 
 Deno.test("secrets.remove: throws on 500", async () => {
@@ -1389,10 +1490,6 @@ Deno.test("secrets.exists: returns true on 204, false on 404", async () => {
   );
   assertEquals(await apiFalse.exists("sec1"), false);
 });
-
-// ---------------------------------------------------------------------------
-// SystemApi Tests
-// ---------------------------------------------------------------------------
 
 Deno.test("system.info: returns LibpodInfo on 200", async () => {
   const api = new SystemApi(
@@ -1506,11 +1603,6 @@ Deno.test("system.events: passes query params", async () => {
   assertEquals(capturedPath, "/events?since=2024-01-01");
 });
 
-
-// ---------------------------------------------------------------------------
-// Containers — new methods
-// ---------------------------------------------------------------------------
-
 Deno.test("containers.exists: returns true on 204", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 204, json: null })),
@@ -1594,8 +1686,7 @@ Deno.test("containers.getArchive: returns ReadableStream with query path", async
 Deno.test("containers.putArchive: succeeds on 200", async () => {
   const api = new ContainersApi(
     mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, _p, _b, _h) =>
-        new Response(null, { status: 200 }),
+      requestRaw: async (_m, _p, _b, _h) => new Response(null, { status: 200 }),
     }),
   );
   const stream = new ReadableStream<Uint8Array>({
@@ -1706,10 +1797,6 @@ Deno.test("containers.changes: returns array on 200", async () => {
   assertEquals(result.length, 1);
 });
 
-// ---------------------------------------------------------------------------
-// Images — new methods
-// ---------------------------------------------------------------------------
-
 Deno.test("images.exists: returns true on 204", async () => {
   const api = new ImagesApi(
     mockTransport(() => ({ status: 204, json: null })),
@@ -1748,10 +1835,6 @@ Deno.test("images.commit: throws on error", async () => {
   assertEquals(err.status, 500);
 });
 
-// ---------------------------------------------------------------------------
-// Volumes — prune type fix verification
-// ---------------------------------------------------------------------------
-
 Deno.test("volumes.prune: returns array on 200 (type fix verification)", async () => {
   const api = new VolumesApi(
     mockTransport(() => ({
@@ -1762,10 +1845,6 @@ Deno.test("volumes.prune: returns array on 200 (type fix verification)", async (
   const result = await api.prune();
   assertEquals(result.length, 1);
 });
-
-// ---------------------------------------------------------------------------
-// ExecApi Tests
-// ---------------------------------------------------------------------------
 
 Deno.test("exec.create: returns exec ID on 201", async () => {
   let capturedPath = "";
@@ -1887,10 +1966,6 @@ Deno.test("exec.resize: throws on error", async () => {
   assertEquals(err.status, 404);
 });
 
-// ---------------------------------------------------------------------------
-// GenerateApi Tests
-// ---------------------------------------------------------------------------
-
 Deno.test("generate.systemd: returns Record on 200 with correct path", async () => {
   let capturedPath = "";
   const api = new GenerateApi(
@@ -1909,7 +1984,10 @@ Deno.test("generate.systemd: returns Record on 200 with correct path", async () 
 
 Deno.test("generate.systemd: throws on error", async () => {
   const api = new GenerateApi(
-    mockTransport(() => ({ status: 500, json: { message: "generate failed" } })),
+    mockTransport(() => ({
+      status: 500,
+      json: { message: "generate failed" },
+    })),
   );
   const err = await assertRejects(
     () => api.systemd("abc"),

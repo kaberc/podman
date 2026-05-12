@@ -632,7 +632,6 @@ Deno.test({
   },
 });
 
-
 // ---------------------------------------------------------------------------
 // Helper: create a minimal tar archive with one file
 // ---------------------------------------------------------------------------
@@ -937,7 +936,7 @@ Deno.test({
     }
 
     try {
-      const dockerfile = "FROM alpine:latest\nCMD [\"echo\", \"built\"]\n";
+      const dockerfile = 'FROM alpine:latest\nCMD ["echo", "built"]\n';
       const tar = simpleTar("Dockerfile", dockerfile);
       const body = new ReadableStream<Uint8Array>({
         start(controller) {
@@ -1006,10 +1005,12 @@ Deno.test({
 
     try {
       let gotEvent = false;
-      for await (const event of c.system.parsedEvents({
-        since: String(since),
-        until: String(until),
-      } as never)) {
+      for await (
+        const event of c.system.parsedEvents({
+          since: String(since),
+          until: String(until),
+        } as never)
+      ) {
         assertEquals(typeof event.Type, "string");
         gotEvent = true;
         break;

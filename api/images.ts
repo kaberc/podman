@@ -4,9 +4,8 @@ import { buildQuery } from "../internal/query.ts";
 import type {
   ContainerChange,
   ImageBuildQuery,
-  ImageRemoveAllQuery,
-  ImageCommitQuery,
   ImageChangesQuery,
+  ImageCommitQuery,
   ImageExportQuery,
   ImageHistory,
   ImageImportQuery,
@@ -17,6 +16,7 @@ import type {
   ImagePruneReport,
   ImagePullQuery,
   ImagePushQuery,
+  ImageRemoveAllQuery,
   ImageRemoveQuery,
   ImageRemoveReport,
   ImageScpQuery,
@@ -24,11 +24,11 @@ import type {
   ImageSearchResult,
   ImageSummary,
   ImageTreeQuery,
-  ScpReport,
   ImageTreeReport,
   LibpodImagesPullReport,
   LocalBuildQuery,
   LocalImagesQuery,
+  ScpReport,
 } from "../types/api.ts";
 
 export class ImagesApi {
@@ -69,10 +69,10 @@ export class ImagesApi {
   async remove(
     nameOrId: string,
     query?: ImageRemoveQuery,
-  ): Promise<ImageRemoveReport> {
-    const path =
-      `/images/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
+  ): Promise<ImageRemoveReport | null> {
+    const path = `/images/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
     const { status, json } = await this.#t.request("DELETE", path);
+    if (status === 404) return null;
     if (status !== 200) throw createPodmanError(status, json, "DELETE", path);
     return json as ImageRemoveReport;
   }
@@ -83,8 +83,9 @@ export class ImagesApi {
     repo: string,
     tag?: string,
   ): Promise<void> {
-    const path =
-      `/images/${encodeURIComponent(nameOrId)}/tag${buildQuery({ repo, tag })}`;
+    const path = `/images/${encodeURIComponent(nameOrId)}/tag${
+      buildQuery({ repo, tag })
+    }`;
     const { status, json } = await this.#t.request("POST", path);
     if (status !== 201) throw createPodmanError(status, json, "POST", path);
   }
@@ -123,8 +124,9 @@ export class ImagesApi {
     nameOrId: string,
     query?: ImagePushQuery,
   ): Promise<void> {
-    const path =
-      `/images/${encodeURIComponent(nameOrId)}/push${buildQuery(query)}`;
+    const path = `/images/${encodeURIComponent(nameOrId)}/push${
+      buildQuery(query)
+    }`;
     const headers: Record<string, string> = {};
     const authHeader = this.#t.getAuthHeader();
     if (authHeader) headers["X-Registry-Auth"] = authHeader;
@@ -208,7 +210,9 @@ export class ImagesApi {
     nameOrId: string,
     query?: ImageTreeQuery,
   ): Promise<ImageTreeReport> {
-    const path = `/images/${encodeURIComponent(nameOrId)}/tree${buildQuery(query)}`;
+    const path = `/images/${encodeURIComponent(nameOrId)}/tree${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("GET", path);
     if (status !== 200) throw createPodmanError(status, json, "GET", path);
     return json as ImageTreeReport;
@@ -219,7 +223,9 @@ export class ImagesApi {
     nameOrId: string,
     query?: ImageChangesQuery,
   ): Promise<ContainerChange[]> {
-    const path = `/images/${encodeURIComponent(nameOrId)}/changes${buildQuery(query)}`;
+    const path = `/images/${encodeURIComponent(nameOrId)}/changes${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("GET", path);
     if (status !== 200) throw createPodmanError(status, json, "GET", path);
     return (json ?? []) as ContainerChange[];
@@ -254,7 +260,9 @@ export class ImagesApi {
     nameOrId: string,
     query?: ImageScpQuery,
   ): Promise<ScpReport> {
-    const path = `/images/scp/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
+    const path = `/images/scp/${encodeURIComponent(nameOrId)}${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path);
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
     return json as ScpReport;
@@ -269,7 +277,9 @@ export class ImagesApi {
   }
 
   /** Build an image from a local directory on the Podman server's filesystem. Returns the build output stream. */
-  async buildLocal(query: LocalBuildQuery): Promise<ReadableStream<Uint8Array>> {
+  async buildLocal(
+    query: LocalBuildQuery,
+  ): Promise<ReadableStream<Uint8Array>> {
     const path = `/local/build${buildQuery(query)}`;
     const res = await this.#t.requestRaw("POST", path);
     if (res.status >= 400) await throwRawError(res, "POST", path);

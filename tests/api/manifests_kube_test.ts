@@ -4,7 +4,6 @@ import { ManifestsApi } from "../../api/manifests.ts";
 import { KubeApi } from "../../api/kube.ts";
 import { mockTransport } from "./_test_helpers.ts";
 
-
 Deno.test("manifests.create: returns IDResponse on 200", async () => {
   let capturedPath = "";
   const api = new ManifestsApi(
@@ -118,7 +117,15 @@ Deno.test("manifests.remove: returns ImageRemoveReport on 200", async () => {
     })),
   );
   const result = await api.remove("mymanifest");
-  assertEquals(result.ExitCode, 0);
+  assertEquals(result?.ExitCode, 0);
+});
+
+Deno.test("manifests.remove: returns null on 404", async () => {
+  const api = new ManifestsApi(
+    mockTransport(() => ({ status: 404, json: { message: "not found" } })),
+  );
+  const result = await api.remove("mymanifest");
+  assertEquals(result, null);
 });
 
 Deno.test("manifests.remove: throws PodmanError on 500", async () => {
@@ -189,7 +196,6 @@ Deno.test("manifests.push: sends X-Registry-Auth header when auth configured", a
   await api.push("mymanifest", "docker.io/lib/alpine");
   assertEquals(capturedHeaders?.["X-Registry-Auth"], "dGVzdDp0ZXN0");
 });
-
 
 Deno.test("kube.play: returns PlayKubeReport with string body", async () => {
   let capturedHeaders: Record<string, string> | undefined;

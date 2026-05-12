@@ -55,8 +55,7 @@ export class ExecApi {
 
   /** Resize an exec session's TTY dimensions. */
   async resize(id: string, query: ExecResizeQuery): Promise<void> {
-    const path =
-      `/exec/${encodeURIComponent(id)}/resize${buildQuery(query)}`;
+    const path = `/exec/${encodeURIComponent(id)}/resize${buildQuery(query)}`;
     const { status, json } = await this.#t.request("POST", path);
     if (status !== 201) throw createPodmanError(status, json, "POST", path);
   }

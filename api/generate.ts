@@ -1,10 +1,7 @@
 import type { Transport } from "../transport.ts";
 import { createPodmanError, throwRawError } from "../types/errors.ts";
 import { buildQuery } from "../internal/query.ts";
-import type {
-  GenerateKubeQuery,
-  GenerateSystemdQuery,
-} from "../types/api.ts";
+import type { GenerateKubeQuery, GenerateSystemdQuery } from "../types/api.ts";
 
 export class GenerateApi {
   #t: Transport;
@@ -17,8 +14,9 @@ export class GenerateApi {
     nameOrId: string,
     query?: GenerateSystemdQuery,
   ): Promise<Record<string, string>> {
-    const path =
-      `/generate/${encodeURIComponent(nameOrId)}/systemd${buildQuery(query)}`;
+    const path = `/generate/${encodeURIComponent(nameOrId)}/systemd${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("GET", path);
     if (status !== 200) throw createPodmanError(status, json, "GET", path);
     return json as Record<string, string>;

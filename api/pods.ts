@@ -5,12 +5,12 @@ import type {
   IDResponse,
   InspectPodData,
   ListPodsReport,
-  PodRemoveQuery,
   PodKillQuery,
   PodKillReport,
   PodListQuery,
   PodPauseReport,
   PodPruneReport,
+  PodRemoveQuery,
   PodRestartReport,
   PodRmReport,
   PodSpecGenerator,
@@ -23,7 +23,6 @@ import type {
   PodTopQuery,
   PodUnpauseReport,
 } from "../types/api.ts";
-
 
 export class PodsApi {
   #t: Transport;
@@ -56,14 +55,14 @@ export class PodsApi {
     return (json ?? []) as ListPodsReport[];
   }
 
-  /** Remove a pod and optionally its containers. */
+  /** Remove a pod and optionally its containers. Returns `null` if the pod was already absent (HTTP 404). */
   async remove(
     nameOrId: string,
     query?: PodRemoveQuery,
-  ): Promise<PodRmReport> {
-    const path =
-      `/pods/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
+  ): Promise<PodRmReport | null> {
+    const path = `/pods/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
     const { status, json } = await this.#t.request("DELETE", path);
+    if (status === 404) return null;
     if (status !== 200) throw createPodmanError(status, json, "DELETE", path);
     return json as PodRmReport;
   }
@@ -82,8 +81,9 @@ export class PodsApi {
     nameOrId: string,
     query?: PodStopQuery,
   ): Promise<PodStopReport | null> {
-    const path =
-      `/pods/${encodeURIComponent(nameOrId)}/stop${buildQuery(query)}`;
+    const path = `/pods/${encodeURIComponent(nameOrId)}/stop${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path);
     if (status === 304) return null;
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
@@ -98,30 +98,34 @@ export class PodsApi {
     return json as PodRestartReport;
   }
 
-  /** Send a signal to all containers in a pod. */
+  /** Send a signal to all containers in a pod. Returns `null` if no containers were running (HTTP 409). */
   async kill(
     nameOrId: string,
     query?: PodKillQuery,
-  ): Promise<PodKillReport> {
-    const path =
-      `/pods/${encodeURIComponent(nameOrId)}/kill${buildQuery(query)}`;
+  ): Promise<PodKillReport | null> {
+    const path = `/pods/${encodeURIComponent(nameOrId)}/kill${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("POST", path);
+    if (status === 409) return null;
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
     return json as PodKillReport;
   }
 
-  /** Pause all containers in a pod. */
-  async pause(nameOrId: string): Promise<PodPauseReport> {
+  /** Pause all containers in a pod. Returns `null` if the pod was already paused (HTTP 409). */
+  async pause(nameOrId: string): Promise<PodPauseReport | null> {
     const path = `/pods/${encodeURIComponent(nameOrId)}/pause`;
     const { status, json } = await this.#t.request("POST", path);
+    if (status === 409) return null;
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
     return json as PodPauseReport;
   }
 
-  /** Unpause all containers in a pod. */
-  async unpause(nameOrId: string): Promise<PodUnpauseReport> {
+  /** Unpause all containers in a pod. Returns `null` if the pod was already unpaused (HTTP 409). */
+  async unpause(nameOrId: string): Promise<PodUnpauseReport | null> {
     const path = `/pods/${encodeURIComponent(nameOrId)}/unpause`;
     const { status, json } = await this.#t.request("POST", path);
+    if (status === 409) return null;
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
     return json as PodUnpauseReport;
   }
@@ -131,8 +135,9 @@ export class PodsApi {
     nameOrId: string,
     query?: PodTopQuery,
   ): Promise<PodTopOKBody> {
-    const path =
-      `/pods/${encodeURIComponent(nameOrId)}/top${buildQuery(query)}`;
+    const path = `/pods/${encodeURIComponent(nameOrId)}/top${
+      buildQuery(query)
+    }`;
     const { status, json } = await this.#t.request("GET", path);
     if (status !== 200) throw createPodmanError(status, json, "GET", path);
     return json as PodTopOKBody;

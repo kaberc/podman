@@ -20,8 +20,9 @@ export class KubeApi {
     query?: PlayKubeQuery,
   ): Promise<PlayKubeReport> {
     const path = `/play/kube${buildQuery(query)}`;
-    const contentType =
-      typeof body === "string" ? "application/x-yaml" : "application/x-tar";
+    const contentType = typeof body === "string"
+      ? "application/x-yaml"
+      : "application/x-tar";
     const res = await this.#t.requestRaw("POST", path, body, {
       "Content-Type": contentType,
     });
@@ -43,8 +44,9 @@ export class KubeApi {
     query?: KubeApplyQuery,
   ): Promise<string> {
     const path = `/kube/apply${buildQuery(query)}`;
-    const contentType =
-      typeof body === "string" ? "application/x-yaml" : "application/x-tar";
+    const contentType = typeof body === "string"
+      ? "application/x-yaml"
+      : "application/x-tar";
     const res = await this.#t.requestRaw("POST", path, body, {
       "Content-Type": contentType,
     });

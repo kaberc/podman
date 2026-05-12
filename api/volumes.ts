@@ -4,10 +4,10 @@ import { buildQuery } from "../internal/query.ts";
 import type {
   VolumeConfigResponse,
   VolumeCreateOptions,
-  VolumeRemoveQuery,
   VolumeListQuery,
   VolumePruneQuery,
   VolumePruneReport,
+  VolumeRemoveQuery,
 } from "../types/api.ts";
 
 export class VolumesApi {
@@ -47,11 +47,12 @@ export class VolumesApi {
   async remove(
     nameOrId: string,
     query?: VolumeRemoveQuery,
-  ): Promise<void> {
-    const path =
-      `/volumes/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
+  ): Promise<{ alreadyRemoved: boolean }> {
+    const path = `/volumes/${encodeURIComponent(nameOrId)}${buildQuery(query)}`;
     const { status, json } = await this.#t.request("DELETE", path);
-    if (status !== 204) throw createPodmanError(status, json, "DELETE", path);
+    if (status === 404) return { alreadyRemoved: true };
+    if (status === 204) return { alreadyRemoved: false };
+    throw createPodmanError(status, json, "DELETE", path);
   }
 
   /** Check if a volume exists. Returns `true` on 204, `false` otherwise. */

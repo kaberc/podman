@@ -47,16 +47,19 @@ export async function createSshTransport(
   const localSocket = `${tempDir}/podman.sock`;
 
   const hasStrictHostKeyChecking = sshOptions.some((o) =>
-    o.includes("StrictHostKeyChecking"),
+    o.includes("StrictHostKeyChecking")
   );
   const args = [
     "-N",
-    "-L", `${localSocket}:${remoteSocketPath}`,
-    "-p", String(port),
+    "-L",
+    `${localSocket}:${remoteSocketPath}`,
+    "-p",
+    String(port),
     ...(hasStrictHostKeyChecking
       ? []
       : ["-o", "StrictHostKeyChecking=accept-new"]),
-    "-o", "ExitOnForwardFailure=yes",
+    "-o",
+    "ExitOnForwardFailure=yes",
   ];
   if (identityFile) args.push("-i", identityFile);
   args.push(...sshOptions, host);
@@ -72,7 +75,9 @@ export async function createSshTransport(
   } catch (e) {
     await Deno.remove(tempDir, { recursive: true }).catch(() => {});
     throw new Error(
-      `SSH tunnel to ${host} failed: ssh command not available (${e instanceof Error ? e.message : e})`,
+      `SSH tunnel to ${host} failed: ssh command not available (${
+        e instanceof Error ? e.message : e
+      })`,
     );
   }
 
@@ -108,7 +113,9 @@ export async function createSshTransport(
     await child.status;
     await Deno.remove(tempDir, { recursive: true }).catch(() => {});
     throw new Error(
-      `SSH tunnel to ${host} failed: ${errText.trim() || "socket not created within 10s"}`,
+      `SSH tunnel to ${host} failed: ${
+        errText.trim() || "socket not created within 10s"
+      }`,
     );
   }
 

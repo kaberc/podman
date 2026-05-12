@@ -1,9 +1,6 @@
-
 import { assertEquals, assertRejects } from "@std/assert";
 import { PodmanError } from "../types/errors.ts";
-import { createTransport, createTcpTransport } from "../transport.ts";
-
-// ─── Stub helpers ────────────────────────────────────────────────────────────
+import { createTcpTransport, createTransport } from "../transport.ts";
 
 const fakeClient = { close() {} };
 
@@ -23,8 +20,6 @@ function stubFetch(
   globalThis.fetch = handler as any;
   return { restore: () => globalThis.fetch = original };
 }
-
-// ─── request() ───────────────────────────────────────────────────────────────
 
 Deno.test("transport.request: parses valid JSON", async () => {
   const s1 = stubCreateHttpClient();
@@ -174,8 +169,6 @@ Deno.test("transport.request: uses custom apiVersion", async () => {
   }
 });
 
-// ─── requestStream() ────────────────────────────────────────────────────────
-
 Deno.test("transport.requestStream: returns body on success", async () => {
   const s1 = stubCreateHttpClient();
   const t = createTransport({ socketPath: "/tmp/fake.sock" });
@@ -262,7 +255,6 @@ Deno.test("transport.requestStream: throws Error when response has no body", asy
   const s1 = stubCreateHttpClient();
   const t = createTransport({ socketPath: "/tmp/fake.sock" });
   const s2 = stubFetch(() => {
-
     const res = new Response(null, { status: 200 });
     return res;
   });
@@ -278,8 +270,6 @@ Deno.test("transport.requestStream: throws Error when response has no body", asy
     t.close();
   }
 });
-
-// ─── requestRaw() ───────────────────────────────────────────────────────────
 
 Deno.test("transport.requestRaw: passes through body and headers", async () => {
   const s1 = stubCreateHttpClient();
@@ -324,9 +314,6 @@ Deno.test("transport.requestRaw: returns raw Response object", async () => {
     t.close();
   }
 });
-
-
-// ─── TCP transport ──────────────────────────────────────────────────────────
 
 Deno.test("tcpTransport.request: builds correct URL from uri", async () => {
   const t = createTcpTransport({ uri: "http://192.168.1.100:8080" });
