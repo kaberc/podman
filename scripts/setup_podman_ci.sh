@@ -11,7 +11,7 @@ work_dir=$(realpath -m "${2:?work directory}")
 
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
-  pkg-config libseccomp-dev podman crun conmon uidmap apparmor
+  build-essential pkg-config libseccomp-dev podman crun conmon uidmap apparmor
 
 commit=$(git -C "$source_dir" rev-parse HEAD)
 mkdir -p "$work_dir"
@@ -36,6 +36,16 @@ fetch_helper() {
 }
 fetch_helper netavark v2.0.0 d8bc342c38382029e7e12256120ac0f7676dcc063aa1e7259189bb69cc869563
 fetch_helper aardvark-dns v2.0.0 fdaa3665ce58337fe597e0822e24de97528529d1a39fa6b655aa656c8ad33086
+
+curl --fail --silent --location \
+  https://passt.top/passt/snapshot/passt-2026_01_20.386b5f5.tar.gz \
+  -o "$work_dir/passt.tar.gz"
+echo "b378b36cc6d17988fd8efdc9e432495afc96787c3ee231aee55bc7e50c4edf6d  $work_dir/passt.tar.gz" \
+  | sha256sum --check --status
+mkdir -p "$work_dir/passt"
+tar -xzf "$work_dir/passt.tar.gz" --strip-components=1 -C "$work_dir/passt"
+make -C "$work_dir/passt" pasta
+install -m 0755 "$work_dir/passt/pasta" "$bin_dir/pasta"
 
 home=$(mktemp -d "$work_dir/home.XXXXXX")
 runtime=$(mktemp -d "$work_dir/runtime.XXXXXX")
