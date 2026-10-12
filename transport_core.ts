@@ -8,6 +8,8 @@
 import { releaseOnEnd, TransportLifetime } from "./internal/lifetime.ts";
 import { createPodmanError, PodmanError } from "./types/errors.ts";
 
+export const DEFAULT_API_VERSION = "6.0.0";
+
 // ─── Public interfaces ───────────────────────────────────────────────────────
 
 export interface TransportResponse {

@@ -1,12 +1,16 @@
 #!/usr/bin/env -S deno run --allow-net --allow-write --allow-read --allow-run
 
-import { join } from "jsr:@std/path@1";
-import { parse as parseYaml } from "jsr:@std/yaml@1";
+import { join } from "@std/path";
+import { generateQueryTypes } from "./generate-queries.ts";
 
-// Pinned: `swagger-latest.yaml` (v6 master) drops `properties:` for ~44 schemas
-// (ListContainer, ContainerCreateResponse, *Report). Do not bump without re-checking.
-const PODMAN_SPEC_URL =
-  "https://storage.googleapis.com/libpod-master-releases/swagger-v5.8.2.yaml";
+// Pinned to the official v6.1.3 docs spec. The GCS `swagger-latest.yaml` is broken
+// upstream (38 schemas lose `properties:`, 57 schemas are missing). Update the URL
+// and digest together.
+const PODMAN_SPEC_URL = "https://docs.podman.io/en/v6.1.3/_static/swagger.yaml";
+const PODMAN_SPEC_SHA256 =
+  "3c09e587c474484c3c1364df4318b0fd934f32ed78a79465e7d8f0ef8377fa8a";
+const SWAGGER2OPENAPI = "swagger2openapi@7.0.8";
+const OPENAPI_TYPESCRIPT_CODEGEN = "openapi-typescript-codegen@0.31.0";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 const TYPES_DIR = join(ROOT, "types");
@@ -17,27 +21,11 @@ const GENERATED_INDEX_PATH = join(TYPES_DIR, "index.ts");
 const MODEL_INDEX_PATH = join(MODELS_DIR, "index.ts");
 const QUERY_OUTPUT_PATH = join(TYPES_DIR, "queries.ts");
 
-const QUERY_TYPE_RENAMES: Record<string, string> = {
-  ArtifactDeleteAllLibpod: "ArtifactRemoveAll",
-  ContainerDeleteLibpod: "ContainerRemove",
-  ContainersStatsAllLibpod: "ContainerStatsAll",
-  ImageDeleteAllLibpod: "ImageRemoveAll",
-  ImageDeleteLibpod: "ImageRemove",
-  ManifestDeleteLibpod: "ManifestRemove",
-  NetworkDeleteLibpod: "NetworkRemove",
-  PodDeleteLibpod: "PodRemove",
-  PodStatsAllLibpod: "PodStats",
-  PutContainerArchiveLibpod: "ContainerArchivePut",
-  QuadletDeleteAllLibpod: "QuadletRemoveAll",
-  QuadletDeleteLibpod: "QuadletRemove",
-  SecretDeleteLibpod: "SecretRemove",
-  VolumeDeleteLibpod: "VolumeRemove",
-};
-
-function queryTypeName(operationId: string): string {
-  const override = QUERY_TYPE_RENAMES[operationId];
-  if (override) return `${override}Query`;
-  return `${operationId.replace(/Libpod$/, "")}Query`;
+function toHex(buffer: ArrayBuffer): string {
+  return Array.from(
+    new Uint8Array(buffer),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 async function downloadSpec(): Promise<void> {
@@ -46,14 +34,21 @@ async function downloadSpec(): Promise<void> {
   if (!res.ok) {
     throw new Error(`Failed to fetch spec: ${res.status} ${res.statusText}`);
   }
-  await Deno.writeTextFile(SWAGGER_PATH, await res.text());
+  const body = new Uint8Array(await res.arrayBuffer());
+  const digest = toHex(await crypto.subtle.digest("SHA-256", body));
+  if (digest !== PODMAN_SPEC_SHA256) {
+    throw new Error(
+      `Spec digest mismatch: expected ${PODMAN_SPEC_SHA256}, got ${digest}`,
+    );
+  }
+  await Deno.writeFile(SWAGGER_PATH, body);
   console.log(`Saved to ${SWAGGER_PATH}`);
 }
 
 async function convertToOpenApi3(): Promise<void> {
   console.log("Converting Swagger 2.0 → OpenAPI 3.0...");
   const cmd = new Deno.Command("npx", {
-    args: ["-y", "swagger2openapi", SWAGGER_PATH, "-o", OPENAPI3_PATH],
+    args: ["-y", SWAGGER2OPENAPI, SWAGGER_PATH, "-o", OPENAPI3_PATH],
     stdout: "inherit",
     stderr: "inherit",
   });
@@ -84,7 +79,7 @@ async function generateModelTypes(): Promise<void> {
   const cmd = new Deno.Command("npx", {
     args: [
       "-y",
-      "openapi-typescript-codegen",
+      OPENAPI_TYPESCRIPT_CODEGEN,
       "--input",
       OPENAPI3_PATH,
       "--output",
@@ -163,138 +158,6 @@ async function makeGeneratedFileDenoCompatible(path: string): Promise<void> {
   if (updated !== source) await Deno.writeTextFile(path, updated);
 }
 
-type OpenApiObject = Record<string, unknown>;
-
-function refName(ref: string): string {
-  return decodeURIComponent(ref.split("/").at(-1) ?? "unknown");
-}
-
-function quotePropertyName(name: string): string {
-  return /^[A-Za-z_$][\w$]*$/.test(name) ? name : JSON.stringify(name);
-}
-
-function schemaType(schema: OpenApiObject | undefined): string {
-  if (!schema) return "unknown";
-
-  const ref = schema.$ref;
-  if (typeof ref === "string") return `models.${refName(ref)}`;
-
-  for (const unionKey of ["oneOf", "anyOf"] as const) {
-    const variants = schema[unionKey];
-    if (Array.isArray(variants)) {
-      return variants.map((variant) => schemaType(variant as OpenApiObject))
-        .join(" | ");
-    }
-  }
-
-  const allOf = schema.allOf;
-  if (Array.isArray(allOf)) {
-    return allOf.map((variant) => schemaType(variant as OpenApiObject)).join(
-      " & ",
-    );
-  }
-
-  const enumValues = schema.enum;
-  if (Array.isArray(enumValues) && enumValues.length > 0) {
-    return enumValues.map((value) => JSON.stringify(value)).join(" | ");
-  }
-
-  const type = schema.type;
-  if (type === "array") {
-    return `Array<${schemaType(schema.items as OpenApiObject | undefined)}>`;
-  }
-  if (type === "integer" || type === "number") return "number";
-  if (type === "boolean") return "boolean";
-  if (type === "string") return "string";
-  if (type === "object") return "Record<string, unknown>";
-
-  return "unknown";
-}
-
-function resolveParameter(
-  parameter: OpenApiObject,
-  components: OpenApiObject,
-): OpenApiObject {
-  const ref = parameter.$ref;
-  if (typeof ref !== "string") return parameter;
-
-  const name = refName(ref);
-  const parameters = components.parameters as
-    | Record<string, OpenApiObject>
-    | undefined;
-  const resolved = parameters?.[name];
-  if (!resolved) throw new Error(`Unable to resolve parameter ${ref}`);
-  return resolved;
-}
-
-function queryTypeBody(
-  parameters: OpenApiObject[],
-  components: OpenApiObject,
-): string | undefined {
-  const queryParams = parameters
-    .map((parameter) => resolveParameter(parameter, components))
-    .filter((parameter) => parameter.in === "query");
-
-  if (queryParams.length === 0) return undefined;
-
-  const fields = queryParams.map((parameter) => {
-    const name = String(parameter.name);
-    const optional = parameter.required === true ? "" : "?";
-    return `  ${quotePropertyName(name)}${optional}: ${
-      schemaType(parameter.schema as OpenApiObject | undefined)
-    };`;
-  });
-
-  return `{
-${fields.join("\n")}
-}`;
-}
-
-async function generateQueryTypes(): Promise<void> {
-  console.log("Generating operation query param types...");
-  const specText = await Deno.readTextFile(OPENAPI3_PATH);
-  const spec = parseYaml(specText) as OpenApiObject;
-  const components = (spec.components ?? {}) as OpenApiObject;
-  const paths = (spec.paths ?? {}) as Record<string, OpenApiObject>;
-  const methods = ["get", "put", "post", "delete", "patch", "options", "head"];
-  const lines: string[] = [];
-
-  for (const pathItem of Object.values(paths)) {
-    const pathParams = (pathItem.parameters ?? []) as OpenApiObject[];
-
-    for (const method of methods) {
-      const op = pathItem[method] as OpenApiObject | undefined;
-      if (!op?.operationId) continue;
-      const operationId = op.operationId as string;
-      if (!operationId.endsWith("Libpod")) continue;
-
-      const opParams = (op.parameters ?? []) as OpenApiObject[];
-      const body = queryTypeBody([...pathParams, ...opParams], components);
-      if (!body) continue;
-
-      lines.push(`export type ${queryTypeName(operationId)} = ${body};`);
-    }
-  }
-
-  lines.sort();
-
-  const queryTypes = lines.join("\n\n") + "\n";
-  const imports = queryTypes.includes("models.")
-    ? 'import type * as models from "./models/index.ts";\n\n'
-    : "";
-
-  await Deno.writeTextFile(
-    QUERY_OUTPUT_PATH,
-    "// Auto-generated by scripts/generate-types.ts. Do not edit.\n\n" +
-      imports +
-      "// ─── Auto-generated operation query param types ───\n\n" +
-      queryTypes,
-  );
-  console.log(
-    `Wrote ${lines.length} query param types to ${QUERY_OUTPUT_PATH}`,
-  );
-}
-
 async function formatGeneratedTypes(): Promise<void> {
   console.log("Formatting generated OpenAPI types...");
   const cmd = new Deno.Command(Deno.execPath(), {
@@ -323,7 +186,7 @@ async function main(): Promise<void> {
     await downloadSpec();
     await convertToOpenApi3();
     await generateModelTypes();
-    await generateQueryTypes();
+    await generateQueryTypes(OPENAPI3_PATH, QUERY_OUTPUT_PATH);
     await formatGeneratedTypes();
     console.log(
       "\nDone. Generator-split OpenAPI types written to types/models/.",

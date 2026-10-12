@@ -12,14 +12,14 @@ import type {
   ContainersPruneReportLibpod,
   ContainerTopOKBody,
   HistoryResponse,
+  ImageSearchReport,
   LibpodImageSummary,
-  Mount,
   networkCreateLibpod,
   networkDisconnectRequest,
-  PruneReport,
+  ReportsPruneReport,
   Schema2ListPublic as _Schema2ListPublic,
   SecretInfoReport as _SecretInfoReport,
-  SpecGenerator as _SpecGenerator,
+  SpecsGoMount,
 } from "./models/index.ts";
 
 // ─── Schema renames (spec name → friendly name) ───
@@ -34,10 +34,11 @@ export type ImageRemoveReport = {
   ExitCode?: number;
 };
 export type ImageHistory = HistoryResponse;
-export type ImagePruneReport = PruneReport;
+export type ImagePruneReport = ReportsPruneReport;
+/** The libpod endpoint returns per-volume reports, not the Docker prune summary. */
+export type VolumePruneReport = ReportsPruneReport;
 export type NetworkCreateOptions = networkCreateLibpod;
 export type NetworkDisconnectOptions = networkDisconnectRequest;
-export type VolumePruneReport = PruneReport;
 
 export type PlayKubeResourceReport = {
   ID?: string;
@@ -81,33 +82,14 @@ export type SystemComponentVersion = ComponentVersion & {
   Version?: string;
 };
 
-// ─── Schema overrides ───
+// ─── Compatibility aliases ───
 
-// Podman's swagger spec incorrectly types SpecGenerator.mounts as Docker Mount[].
-// The libpod API actually accepts OCI spec mounts with {destination, type, source, options}.
-// We override the mounts field to accept both formats.
-export type OciMount = {
-  destination: string;
-  type?: string;
-  source?: string;
-  options?: string[];
-};
-
-export type SpecGenerator = Omit<_SpecGenerator, "mounts"> & {
-  mounts?: (Mount | OciMount)[];
-};
+/** OCI runtime-spec mount, as accepted by `SpecGenerator.mounts`. */
+export type OciMount = SpecsGoMount;
 
 // ─── Response-derived types ───
 
-export type ImageSearchResult = {
-  Description?: string;
-  Index?: string;
-  IsAutomated?: boolean;
-  Name?: string;
-  Official?: string | boolean;
-  Stars?: number;
-  Tag?: string;
-};
+export type ImageSearchResult = ImageSearchReport;
 
 // ─── Custom types (not in OpenAPI spec) ───
 

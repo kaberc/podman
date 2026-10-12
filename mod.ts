@@ -29,6 +29,7 @@ export {
 } from "./transport.ts";
 export {
   createSshTransport,
+  PodmanSshError,
   type SshTransportOptions,
 } from "./ssh_transport.ts";
 
@@ -50,6 +51,7 @@ export type * from "./types/api.ts";
 
 export { ContainersApi } from "./api/containers.ts";
 export { ImagesApi } from "./api/images.ts";
+export type { ImagePullReport } from "./api/images.ts";
 export { NetworksApi } from "./api/networks.ts";
 export { VolumesApi } from "./api/volumes.ts";
 export { PodsApi } from "./api/pods.ts";

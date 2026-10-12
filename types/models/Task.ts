@@ -6,8 +6,20 @@
  * Task carries the information about one backend task
  */
 export type Task = {
+  /**
+   * endpoint ID
+   */
   EndpointID?: string;
+  /**
+   * endpoint IP
+   */
   EndpointIP?: string;
+  /**
+   * info
+   */
   Info?: Record<string, string>;
+  /**
+   * name
+   */
   Name?: string;
 };

@@ -2,6 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BlkiodevThrottleDevice } from "./BlkiodevThrottleDevice.ts";
+import type { BlkiodevWeightDevice } from "./BlkiodevWeightDevice.ts";
 import type { CgroupnsMode } from "./CgroupnsMode.ts";
 import type { CgroupSpec } from "./CgroupSpec.ts";
 import type { DeviceMapping } from "./DeviceMapping.ts";
@@ -9,17 +11,14 @@ import type { DeviceRequest } from "./DeviceRequest.ts";
 import type { IpcMode } from "./IpcMode.ts";
 import type { Isolation } from "./Isolation.ts";
 import type { LogConfig } from "./LogConfig.ts";
-import type { Mount } from "./Mount.ts";
+import type { MountMount } from "./MountMount.ts";
 import type { NetworkMode } from "./NetworkMode.ts";
 import type { PidMode } from "./PidMode.ts";
-import type { PortMap } from "./PortMap.ts";
+import type { PortBinding } from "./PortBinding.ts";
 import type { RestartPolicy } from "./RestartPolicy.ts";
-import type { StrSlice } from "./StrSlice.ts";
-import type { ThrottleDevice } from "./ThrottleDevice.ts";
 import type { Ulimit } from "./Ulimit.ts";
 import type { UsernsMode } from "./UsernsMode.ts";
 import type { UTSMode } from "./UTSMode.ts";
-import type { WeightDevice } from "./WeightDevice.ts";
 /**
  * Here, "non-portable" means "dependent of the host we are running on".
  * Portable information *should* appear in Config.
@@ -31,14 +30,17 @@ export type HostConfig = {
    * Applicable to all platforms
    */
   Binds?: Array<string>;
-  BlkioDeviceReadBps?: Array<ThrottleDevice>;
-  BlkioDeviceReadIOps?: Array<ThrottleDevice>;
-  BlkioDeviceWriteBps?: Array<ThrottleDevice>;
-  BlkioDeviceWriteIOps?: Array<ThrottleDevice>;
+  BlkioDeviceReadBps?: Array<BlkiodevThrottleDevice>;
+  BlkioDeviceReadIOps?: Array<BlkiodevThrottleDevice>;
+  BlkioDeviceWriteBps?: Array<BlkiodevThrottleDevice>;
+  BlkioDeviceWriteIOps?: Array<BlkiodevThrottleDevice>;
   BlkioWeight?: number;
-  BlkioWeightDevice?: Array<WeightDevice>;
-  CapAdd?: StrSlice;
-  CapDrop?: StrSlice;
+  BlkioWeightDevice?: Array<BlkiodevWeightDevice>;
+  /**
+   * Applicable to UNIX platforms
+   */
+  CapAdd?: Array<string>;
+  CapDrop?: Array<string>;
   Cgroup?: CgroupSpec;
   /**
    * Applicable to UNIX platforms
@@ -78,19 +80,6 @@ export type HostConfig = {
   Init?: boolean;
   IpcMode?: IpcMode;
   Isolation?: Isolation;
-  /**
-   * KernelMemory specifies the kernel memory limit (in bytes) for the container.
-   * Deprecated: kernel 5.4 deprecated kmem.limit_in_bytes.
-   */
-  KernelMemory?: number;
-  /**
-   * Hard limit for kernel TCP buffer memory (in bytes).
-   *
-   * Deprecated: This field is deprecated and will be removed in the next release.
-   * Starting with 6.12, the kernel has deprecated kernel memory tcp accounting
-   * for cgroups v1.
-   */
-  KernelMemoryTCP?: number;
   Links?: Array<string>;
   LogConfig?: LogConfig;
   /**
@@ -104,14 +93,14 @@ export type HostConfig = {
   /**
    * Mounts specs used by the container
    */
-  Mounts?: Array<Mount>;
+  Mounts?: Array<MountMount>;
   NanoCpus?: number;
   NetworkMode?: NetworkMode;
   OomKillDisable?: boolean;
   OomScoreAdj?: number;
   PidMode?: PidMode;
   PidsLimit?: number;
-  PortBindings?: PortMap;
+  PortBindings?: Record<string, Array<PortBinding>>;
   Privileged?: boolean;
   PublishAllPorts?: boolean;
   /**

@@ -3,8 +3,6 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { HealthcheckConfig } from "./HealthcheckConfig.ts";
-import type { PortSet } from "./PortSet.ts";
-import type { StrSlice } from "./StrSlice.ts";
 /**
  * It should hold only portable information about the container.
  * Here, "portable" means "independent from the host we are running on".
@@ -17,25 +15,19 @@ export type Config = {
   AttachStderr?: boolean;
   AttachStdin?: boolean;
   AttachStdout?: boolean;
-  Cmd?: StrSlice;
+  Cmd?: Array<string>;
   Domainname?: string;
-  Entrypoint?: StrSlice;
+  Entrypoint?: Array<string>;
   Env?: Array<string>;
-  ExposedPorts?: PortSet;
+  ExposedPorts?: Record<string, Record<string, unknown>>;
   Healthcheck?: HealthcheckConfig;
   Hostname?: string;
   Image?: string;
   Labels?: Record<string, string>;
-  /**
-   * Mac Address of the container.
-   *
-   * Deprecated: this field is deprecated since API v1.44. Use EndpointSettings.MacAddress instead.
-   */
-  MacAddress?: string;
   NetworkDisabled?: boolean;
   OnBuild?: Array<string>;
   OpenStdin?: boolean;
-  Shell?: StrSlice;
+  Shell?: Array<string>;
   StdinOnce?: boolean;
   StopSignal?: string;
   StopTimeout?: number;

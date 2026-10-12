@@ -8,6 +8,7 @@ import type {
   VolumePruneQuery,
   VolumePruneReport,
   VolumeRemoveQuery,
+  VolumeRenameQuery,
 } from "../types/api.ts";
 
 export class VolumesApi {
@@ -53,6 +54,15 @@ export class VolumesApi {
     if (status === 404) return { alreadyRemoved: true };
     if (status === 204) return { alreadyRemoved: false };
     throw createPodmanError(status, json, "DELETE", path);
+  }
+
+  /** Rename a volume. Requires Podman 6. */
+  async rename(nameOrId: string, query: VolumeRenameQuery): Promise<void> {
+    const path = `/volumes/${encodeURIComponent(nameOrId)}/rename${
+      buildQuery(query)
+    }`;
+    const { status, json } = await this.#t.request("POST", path);
+    if (status !== 204) throw createPodmanError(status, json, "POST", path);
   }
 
   /** Check if a volume exists. Returns `true` on 204, `false` otherwise. */

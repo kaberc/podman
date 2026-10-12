@@ -2,10 +2,13 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-/**
- * PeerInfo represents one peer of an overlay network
- */
 export type PeerInfo = {
+  /**
+   * IP-address of the peer-node in the Swarm cluster.
+   */
   IP?: string;
+  /**
+   * ID of the peer-node in the Swarm cluster.
+   */
   Name?: string;
 };

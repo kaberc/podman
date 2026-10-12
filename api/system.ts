@@ -1,6 +1,7 @@
 import type { Transport } from "../transport.ts";
 import { createPodmanError } from "../types/errors.ts";
 import { buildQuery } from "../internal/query.ts";
+import { readJsonLines } from "../internal/json-lines.ts";
 import type {
   LibpodInfo,
   SystemCheckQuery,
@@ -8,6 +9,7 @@ import type {
   SystemComponentVersion,
   SystemDfReport,
   SystemEventsQuery,
+  SystemPruneQuery,
   SystemPruneReport,
 } from "../types/api.ts";
 
@@ -42,8 +44,8 @@ export class SystemApi {
   }
 
   /** Prune unused data (containers, images, volumes, networks). */
-  async prune(): Promise<SystemPruneReport> {
-    const path = "/system/prune";
+  async prune(query?: SystemPruneQuery): Promise<SystemPruneReport> {
+    const path = `/system/prune${buildQuery(query)}`;
     const { status, json } = await this.#t.request("POST", path);
     if (status !== 200) throw createPodmanError(status, json, "POST", path);
     return json as SystemPruneReport;
@@ -65,40 +67,17 @@ export class SystemApi {
     return await this.#t.requestStream("GET", path);
   }
 
-  /** Stream system events as parsed JSON objects. */
+  /** Stream parsed event objects; skip malformed records, reject lines over 1 MiB. */
   async *parsedEvents(
     query?: SystemEventsQuery,
   ): AsyncGenerator<Record<string, unknown>> {
     const stream = await this.events(query);
-    const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
-    let buffer = "";
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += value;
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed) {
-            try {
-              yield JSON.parse(trimmed) as Record<string, unknown>;
-            } catch {
-              // Skip malformed JSON lines (e.g. truncated stream)
-            }
-          }
-        }
+    for await (const value of readJsonLines(stream, { malformed: "skip" })) {
+      if (
+        typeof value === "object" && value !== null && !Array.isArray(value)
+      ) {
+        yield Object.fromEntries(Object.entries(value));
       }
-      if (buffer.trim()) {
-        try {
-          yield JSON.parse(buffer.trim()) as Record<string, unknown>;
-        } catch {
-          // Skip malformed trailing data
-        }
-      }
-    } finally {
-      await reader.cancel();
     }
   }
 

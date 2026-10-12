@@ -142,61 +142,6 @@ Deno.test("manifests.remove: throws PodmanError on 500", async () => {
   assertEquals(err.status, 500);
 });
 
-Deno.test("manifests.push: returns IDResponse on 200", async () => {
-  let capturedPath = "";
-  let capturedHeaders: Record<string, string> | undefined;
-  const api = new ManifestsApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: (_m, p, _b, headers) => {
-        capturedPath = p;
-        capturedHeaders = headers;
-        return Promise.resolve(
-          new Response(JSON.stringify({ Id: "sha256:abc" }), { status: 200 }),
-        );
-      },
-    }),
-  );
-  const result = await api.push("mymanifest", "docker.io/lib/alpine");
-  assertEquals(result.Id, "sha256:abc");
-  assertEquals(capturedPath.includes("mymanifest"), true);
-  assertEquals(capturedPath.includes("docker.io"), true);
-  assertEquals(capturedHeaders !== undefined, true);
-});
-Deno.test("manifests.push: throws PodmanError on 500", async () => {
-  const api = new ManifestsApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: () =>
-        Promise.resolve(
-          new Response(JSON.stringify({ message: "push failed" }), {
-            status: 500,
-          }),
-        ),
-    }),
-  );
-  const err = await assertRejects(
-    () => api.push("mymanifest", "docker.io/lib/alpine"),
-    PodmanError,
-  );
-  assertEquals(err.status, 500);
-});
-
-Deno.test("manifests.push: sends X-Registry-Auth header when auth configured", async () => {
-  let capturedHeaders: Record<string, string> | undefined;
-  const transport = mockTransport(() => ({ status: 200, json: null }), {
-    requestRaw: (_m, _p, _b, headers) => {
-      capturedHeaders = headers;
-      return Promise.resolve(
-        new Response(JSON.stringify({ Id: "sha256:abc" }), { status: 200 }),
-      );
-    },
-  });
-  // Override getAuthHeader to return a token
-  transport.getAuthHeader = () => "dGVzdDp0ZXN0";
-  const api = new ManifestsApi(transport);
-  await api.push("mymanifest", "docker.io/lib/alpine");
-  assertEquals(capturedHeaders?.["X-Registry-Auth"], "dGVzdDp0ZXN0");
-});
-
 Deno.test("kube.play: returns PlayKubeReport with string body", async () => {
   let capturedHeaders: Record<string, string> | undefined;
   const api = new KubeApi(

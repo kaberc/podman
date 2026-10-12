@@ -25,7 +25,6 @@ export type ContainerStats = {
    */
   Network?: Record<string, ContainerNetworkStats>;
   PIDs?: number;
-  PerCPU?: Array<number>;
   SystemNano?: number;
   UpTime?: Duration;
 };

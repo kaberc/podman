@@ -7,6 +7,7 @@ import {
   createTcpTransport,
   createSshTransport,
   PodmanError,
+  PodmanSshError,
   ContainersApi,
   ImagesApi,
   NetworksApi,
@@ -40,6 +41,7 @@ function findSocket() {
   const rootful = "/run/podman/podman.sock";
   const xdg = process.env.XDG_RUNTIME_DIR;
   const explicit = process.env.PODMAN_SOCK;
+  if (explicit) return explicit;
   const rootless = xdg ? `${xdg}/podman/podman.sock` : null;
 
   for (const p of [explicit, rootless, rootful]) {
@@ -63,6 +65,7 @@ assert(typeof createTransport === "function", "createTransport is exported");
 assert(typeof createTcpTransport === "function", "createTcpTransport is exported");
 assert(typeof createSshTransport === "function", "createSshTransport is exported");
 assert(typeof PodmanError === "function", "PodmanError is exported");
+assert(typeof PodmanSshError === "function", "PodmanSshError is exported");
 assert(typeof ContainersApi === "function", "ContainersApi is exported");
 assert(typeof ImagesApi === "function", "ImagesApi is exported");
 assert(typeof NetworksApi === "function", "NetworksApi is exported");

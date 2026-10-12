@@ -20,8 +20,14 @@ export type ListQuadlet = {
    */
   Path?: string;
   /**
-   * What is the status of the Quadlet - if present in systemd, will be a
-   * systemd status, else will mention if the Quadlet has syntax errors
+   * Pod is the pod Quadlet file referenced by Pod= in [Container]
+   * Empty for quadlet types that do not support Pod=
+   */
+  Pod?: string;
+  /**
+   * What is the status of the Quadlet - either values from systemd
+   * (e.g. active/running), or podman-defined values "Not loaded"
+   * and "loaded template".
    */
   Status?: string;
   /**

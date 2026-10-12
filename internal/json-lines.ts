@@ -3,12 +3,13 @@ import { PodmanStreamError } from "./multiplexed-output.ts";
 const MAX_LINE_BYTES = 1024 * 1024;
 const NEWLINE = 0x0a;
 
-function parseLine(line: Uint8Array): unknown {
+function parseLine(line: Uint8Array, malformed: "reject" | "skip"): unknown {
   try {
     const text = new TextDecoder("utf-8", { fatal: true }).decode(line);
     return text.trim() ? JSON.parse(text) : undefined;
   } catch (error) {
     if (error instanceof SyntaxError || error instanceof TypeError) {
+      if (malformed === "skip") return undefined;
       throw new PodmanStreamError("frame", "Malformed JSON line");
     }
     throw error;
@@ -23,6 +24,7 @@ function parseLine(line: Uint8Array): unknown {
  */
 export async function* readJsonLines(
   stream: ReadableStream<Uint8Array>,
+  { malformed = "reject" }: { readonly malformed?: "reject" | "skip" } = {},
 ): AsyncGenerator<unknown> {
   const reader = stream.getReader();
   let parts: Uint8Array[] = [];
@@ -44,7 +46,7 @@ export async function* readJsonLines(
     while (true) {
       const chunk = await reader.read();
       if (chunk.done) {
-        const value = parseLine(takeLine());
+        const value = parseLine(takeLine(), malformed);
         if (value !== undefined) yield value;
         return;
       }
@@ -58,7 +60,7 @@ export async function* readJsonLines(
         }
         parts.push(chunk.value.subarray(start, stop));
         if (end === -1) break;
-        const value = parseLine(takeLine());
+        const value = parseLine(takeLine(), malformed);
         if (value !== undefined) yield value;
         start = end + 1;
       }

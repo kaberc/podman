@@ -1,14 +1,22 @@
 {
   "name": "@kaberc/podman",
-  "description": "Typed Podman client for Deno and Node.js. Full libpod API with zero dependencies.",
-  "version": "0.5.1",
+  "description": "Typed Podman client for Deno, Node.js and Bun. Full libpod API with zero dependencies.",
+  "version": "0.6.0",
   "exports": "./mod.ts",
-  "exclude": ["npm/", "_node/", "scripts/"],
+  "exclude": [
+    "npm/",
+    "_node/",
+    "scripts/",
+    ".podman-source/",
+    ".omo/",
+    ".opencode/"
+  ],
   "publish": {
     "exclude": [
       ".omo/",
       ".opencode/",
       ".codegraph",
+      ".podman-source/",
       "scripts/",
       "_node/",
       "_build_tmp/",
@@ -18,7 +26,10 @@
     ]
   },
   "imports": {
-    "@std/assert": "jsr:@std/assert@1"
+    "@std/assert": "jsr:@std/assert@1.0.19",
+    "@std/path": "jsr:@std/path@1.1.6",
+    "@std/yaml": "jsr:@std/yaml@1.3.0",
+    "@deno/dnt": "jsr:@deno/dnt@0.44.0"
   },
   "tasks": {
     "check": "deno check mod.ts",

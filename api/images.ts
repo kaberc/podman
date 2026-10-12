@@ -1,16 +1,19 @@
 import type { Transport } from "../transport.ts";
 import { createPodmanError, throwRawError } from "../types/errors.ts";
 import { buildQuery } from "../internal/query.ts";
-import { readImagePull } from "../internal/image-pull.ts";
+import type { ImagePullReport } from "../internal/image-pull.ts";
+import { pullImage, pushImage } from "../internal/image-transfer.ts";
+import { registerBuildOutput } from "../internal/build-output.ts";
+export type { ImagePullReport } from "../internal/image-pull.ts";
 import type {
   ContainerChange,
   ImageBuildQuery,
   ImageChangesQuery,
   ImageCommitQuery,
+  ImageData,
   ImageExportQuery,
   ImageHistory,
   ImageImportQuery,
-  ImageInspect,
   ImageListQuery,
   ImageLoadReport,
   ImagePruneQuery,
@@ -26,7 +29,6 @@ import type {
   ImageSummary,
   ImageTreeQuery,
   ImageTreeReport,
-  LibpodImagesPullReport,
   LocalBuildQuery,
   LocalImagesQuery,
   ScpReport,
@@ -47,30 +49,20 @@ export class ImagesApi {
   }
 
   /** Inspect an image. Returns `null` if the image is not found. */
-  async inspect(nameOrId: string): Promise<ImageInspect | null> {
+  async inspect(nameOrId: string): Promise<ImageData | null> {
     const path = `/images/${encodeURIComponent(nameOrId)}/json`;
     const { status, json } = await this.#t.request("GET", path);
     if (status === 404) return null;
     if (status !== 200) throw createPodmanError(status, json, "GET", path);
-    return json as ImageInspect;
+    return json as ImageData;
   }
 
-  /** Pull an image; await each progress callback before consuming the next report. */
+  /** Await progress; returns the native summary or, in compatMode, the last Docker report at EOF. */
   async pull(
     query: ImagePullQuery,
-    onProgress?: (report: LibpodImagesPullReport) => void | Promise<void>,
-  ): Promise<LibpodImagesPullReport> {
-    const path = `/images/pull${buildQuery(query)}`;
-    const headers: Record<string, string> = {};
-    const authHeader = this.#t.getAuthHeader();
-    if (authHeader) headers["X-Registry-Auth"] = authHeader;
-    const stream = await this.#t.requestStream(
-      "POST",
-      path,
-      undefined,
-      headers,
-    );
-    return await readImagePull(stream, path, onProgress);
+    onProgress?: (report: ImagePullReport) => void | Promise<void>,
+  ): Promise<ImagePullReport> {
+    return await pullImage(this.#t, query, onProgress);
   }
 
   /** Remove an image. Returns a report of untagged and deleted layers. */
@@ -132,15 +124,7 @@ export class ImagesApi {
     nameOrId: string,
     query?: ImagePushQuery,
   ): Promise<void> {
-    const path = `/images/${encodeURIComponent(nameOrId)}/push${
-      buildQuery(query)
-    }`;
-    const headers: Record<string, string> = {};
-    const authHeader = this.#t.getAuthHeader();
-    if (authHeader) headers["X-Registry-Auth"] = authHeader;
-    const res = await this.#t.requestRaw("POST", path, undefined, headers);
-    if (res.status !== 200) await throwRawError(res, "POST", path);
-    await res.body?.cancel();
+    await pushImage(this.#t, nameOrId, query);
   }
 
   /** Import an image from a tar archive stream. Returns the new image ID. */
@@ -179,14 +163,10 @@ export class ImagesApi {
     query?: ImageBuildQuery,
   ): Promise<ReadableStream<Uint8Array>> {
     const path = `/build${buildQuery(query)}`;
-    const res = await this.#t.requestRaw("POST", path, body, {
+    const stream = await this.#t.requestStream("POST", path, body, {
       "Content-Type": "application/x-tar",
     });
-    if (res.status >= 400) await throwRawError(res, "POST", path);
-    if (!res.body) {
-      throw new Error("No response body for build");
-    }
-    return res.body;
+    return registerBuildOutput(stream, path);
   }
 
   /** Check if an image exists. Returns `true` on 204, `false` otherwise. */
@@ -289,6 +269,6 @@ export class ImagesApi {
     query: LocalBuildQuery,
   ): Promise<ReadableStream<Uint8Array>> {
     const path = `/local/build${buildQuery(query)}`;
-    return await this.#t.requestStream("POST", path);
+    return registerBuildOutput(await this.#t.requestStream("POST", path), path);
   }
 }

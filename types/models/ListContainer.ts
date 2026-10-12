@@ -47,7 +47,7 @@ export type ListContainer = {
    * The key is the port number and the string slice contains the protocols,
    * i.e. "tcp", "udp" and "sctp".
    */
-  ExposedPorts?: unknown;
+  ExposedPorts?: Record<string, Array<string>>;
   /**
    * The unique identifier for the container
    */

@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { ConmonInfo } from "./ConmonInfo.ts";
 import type { CPUUsage } from "./CPUUsage.ts";
+import type { DeviceInfo } from "./DeviceInfo.ts";
 import type { DistributionInfo } from "./DistributionInfo.ts";
 import type { IDMappings } from "./IDMappings.ts";
 import type { NetworkInfo } from "./NetworkInfo.ts";
@@ -11,13 +12,13 @@ import type { OCIRuntimeInfo } from "./OCIRuntimeInfo.ts";
 import type { PastaInfo } from "./PastaInfo.ts";
 import type { RemoteSocket } from "./RemoteSocket.ts";
 import type { SecurityInfo } from "./SecurityInfo.ts";
-import type { SlirpInfo } from "./SlirpInfo.ts";
 /**
  * HostInfo describes the libpod host
  */
 export type HostInfo = {
   arch?: string;
   buildahVersion?: string;
+  cdiSpecDirs?: Array<string>;
   cgroupControllers?: Array<string>;
   cgroupManager?: string;
   cgroupVersion?: string;
@@ -25,6 +26,7 @@ export type HostInfo = {
   cpuUtilization?: CPUUsage;
   cpus?: number;
   databaseBackend?: string;
+  discoveredDevices?: Array<DeviceInfo>;
   distribution?: DistributionInfo;
   emulatedArchitectures?: Array<string>;
   eventLogger?: string;
@@ -34,6 +36,7 @@ export type HostInfo = {
   kernel?: string;
   linkmode?: string;
   logDriver?: string;
+  memAvailable?: number;
   memFree?: number;
   memTotal?: number;
   networkBackend?: string;
@@ -43,16 +46,20 @@ export type HostInfo = {
   pasta?: PastaInfo;
   remoteSocket?: RemoteSocket;
   /**
-   * RootlessNetworkCmd returns the default rootless network command (slirp4netns or pasta)
+   * RootlessNetworkCmd returns the default rootless network command (pasta)
    */
   rootlessNetworkCmd?: string;
+  /**
+   * RootlessPortForwarder returns the port forwarding mechanism for rootless
+   * bridge networks: "rootlessport" (default) or "pasta" (experimental)
+   */
+  rootlessPortForwarder?: string;
   runtimeInfo?: Record<string, unknown>;
   security?: SecurityInfo;
   /**
    * ServiceIsRemote is true when the podman/libpod service is remote to the client
    */
   serviceIsRemote?: boolean;
-  slirp4netns?: SlirpInfo;
   swapFree?: number;
   swapTotal?: number;
   uptime?: string;

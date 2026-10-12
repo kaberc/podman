@@ -2,28 +2,37 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Config } from "./Config.ts";
 import type { Descriptor } from "./Descriptor.ts";
 import type { DockerOCIImageConfig } from "./DockerOCIImageConfig.ts";
-import type { DriverData } from "./DriverData.ts";
+import type { Identity } from "./Identity.ts";
+import type { ImageRootFS } from "./ImageRootFS.ts";
 import type { ManifestSummary } from "./ManifestSummary.ts";
 import type { Metadata } from "./Metadata.ts";
-import type { RootFS } from "./RootFS.ts";
+import type { StorageDriverData } from "./StorageDriverData.ts";
 export type ImageInspect = {
   /**
    * Architecture is the hardware CPU architecture that the image runs on.
    */
   Architecture?: string;
-  /**
-   * Author is the name of the author that was specified when committing the
-   * image, or as specified through MAINTAINER (deprecated) in the Dockerfile.
-   */
   Author?: string;
   /**
    * Comment is an optional message that can be set when committing or
-   * importing the image.
+   * importing the image. This field is omitted if not set.
    */
   Comment?: string;
   Config?: DockerOCIImageConfig;
+  /**
+   * When you embed a struct, the fields of the embedded struct are "promoted" to the outer struct.
+   * If a field in the outer struct has the same name as a field in the embedded struct,
+   * the outer struct's field will shadow or override the embedded one allowing for a clean way to
+   * hide fields from the swagger spec that still exist in the libraries struct.
+   *
+   * Deprecated: since API v1.44, will no longer be included in API v1.45.
+   * https://docs.docker.com/reference/api/engine/version-history/#v144-api-changes
+   */
+  Container?: string;
+  ContainerConfig?: Config;
   /**
    * Created is the date and time at which the image was created, formatted in
    * RFC 3339 nano-seconds (time.RFC3339Nano).
@@ -33,15 +42,8 @@ export type ImageInspect = {
    */
   Created?: string;
   Descriptor?: Descriptor;
-  /**
-   * DockerVersion is the version of Docker that was used to build the image.
-   *
-   * Depending on how the image was created, this field may be empty.
-   *
-   * Deprecated: this field is deprecated, and will be removed in the next release.
-   */
   DockerVersion?: string;
-  GraphDriver?: DriverData;
+  GraphDriver?: StorageDriverData;
   /**
    * ID is the content-addressable ID of an image.
    *
@@ -53,6 +55,7 @@ export type ImageInspect = {
    * holds digests of image manifests that reference the image.
    */
   Id?: string;
+  Identity?: Identity;
   /**
    * Manifests is a list of image manifests available in this image. It
    * provides a more detailed view of the platform-specific image manifests or
@@ -75,15 +78,6 @@ export type ImageInspect = {
    * run on (especially for Windows).
    */
   OsVersion?: string;
-  /**
-   * Parent is the ID of the parent image.
-   *
-   * Depending on how the image was created, this field may be empty and
-   * is only set for images that were built/created locally. This field
-   * is empty if the image was pulled from an image registry.
-   *
-   * Deprecated: this field is deprecated, and will be removed in the next release.
-   */
   Parent?: string;
   /**
    * RepoDigests is a list of content-addressable digests of locally available
@@ -104,7 +98,7 @@ export type ImageInspect = {
    * "untagged", in which case it can still be referenced by its ID.
    */
   RepoTags?: Array<string>;
-  RootFS?: RootFS;
+  RootFS?: ImageRootFS;
   /**
    * Size is the total size of the image including all layers it is composed of.
    */
@@ -113,4 +107,5 @@ export type ImageInspect = {
    * Variant is the CPU architecture variant (presently ARM-only).
    */
   Variant?: string;
+  VirtualSize?: number;
 };

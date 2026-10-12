@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.6.0
+
+### Podman 6 migration
+
+- Types now use the stable Podman 6.1.3 specification, with a pinned SHA-256
+  digest.
+- The default libpod API version is `6.0.0`. The supported server baseline is
+  Podman 6.
+- `volumes.rename` wraps the new rename endpoint. `system.prune` accepts query
+  options, and `networks.create` accepts `ignoreIfExists`.
+- Pull callbacks include Podman 6 `status` and `pullProgress` reports.
+
+### Runtime and protocol fixes
+
+- Bun uses native fetch for Unix sockets and verified TLS, including client
+  certificates.
+- SSH accepts `signal` and `timeout: null`. Cancellation and unexpected exits
+  close active requests, end the SSH child, and remove its private directory.
+  Startup and tunnel failures expose `PodmanSshError` with bounded diagnostics.
+- Compatibility pulls return the final Docker report after the stream ends.
+- Image and manifest pushes consume their reports and reject in-body failures.
+  Manifest pushes use the correct `/registry/` route.
+- Tar builds use deadline-free streams. Build errors preserve the actual
+  endpoint, including `/local/build` and query parameters, without
+  caller-supplied metadata.
+- Network updates accept HTTP 204. Network removal rejects errors in HTTP-200
+  reports.
+- Parsed events retain malformed-record skipping but yield only objects and
+  limit each record to 1 MiB.
+- Build and generation tools have exact dependency pins. CI covers the compiled
+  package on Node 18.18, 22, and 24, plus Bun.
+
+### Breaking changes
+
+- `images.inspect` returns the native libpod `ImageData` type, not Docker's
+  `ImageInspect`. `pods.stats` accepts snapshots only; `stream: true` is
+  excluded.
+- Generated models follow Podman 6 names and fields. Removed Docker-compat
+  models no longer have exports. Examples: `Mount` becomes `MountMount` or
+  `SpecsGoMount`, `Version` becomes `DefineVersion`, and `PruneReport` becomes
+  `ReportsPruneReport`. Friendly libpod aliases remain, including `ImageSummary`
+  and `VolumePruneReport`.
+- `SpecGenerator.mounts` accepts OCI mounts only. `ContainerStopQuery.Ignore`
+  becomes `ignore`. Image search fields now match `ImageSearchReport`.
+- Network connect and disconnect no longer claim idempotency on HTTP 409.
+  Repeated operations expose Podman errors. Their result flags are always
+  `false`.
+
 ## 0.5.1
 
 - Image pulls consume progress and quiet reports, reject embedded errors, and

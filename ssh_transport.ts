@@ -1,142 +1,67 @@
+import {
+  openSshTunnel,
+  PodmanSshError,
+  type SshExit,
+  type SshProcess,
+  type SshRuntime,
+  type SshTransportOptions,
+} from "./internal/ssh-lifetime.ts";
 import { createTransport, type Transport } from "./transport.ts";
-import type { AuthOption } from "./transport_core.ts";
 
-export interface SshTransportOptions {
-  host: string;
-  remoteSocketPath?: string;
-  port?: number;
-  identityFile?: string;
-  sshOptions?: string[];
-  apiVersion?: string;
-  timeout?: number;
-  auth?: AuthOption;
-}
+export { PodmanSshError };
+export type { SshTransportOptions };
 
-async function drainStderr(
-  stream: ReadableStream<Uint8Array>,
-): Promise<string> {
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of stream) {
-    chunks.push(chunk);
-  }
-  const total = chunks.reduce((n, c) => n + c.length, 0);
-  const buf = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    buf.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return new TextDecoder().decode(buf);
-}
-
-export async function createSshTransport(
-  opts: SshTransportOptions,
-): Promise<Transport> {
-  const {
-    host,
-    remoteSocketPath = "/run/podman/podman.sock",
-    port = 22,
-    identityFile,
-    sshOptions = [],
-    apiVersion,
-    timeout,
-    auth,
-  } = opts;
-
-  const tempDir = await Deno.makeTempDir({ prefix: "podman-deno-" });
-  const localSocket = `${tempDir}/podman.sock`;
-
-  const hasStrictHostKeyChecking = sshOptions.some((o) =>
-    o.includes("StrictHostKeyChecking")
-  );
-  const args = [
-    "-N",
-    "-L",
-    `${localSocket}:${remoteSocketPath}`,
-    "-p",
-    String(port),
-    ...(hasStrictHostKeyChecking
-      ? []
-      : ["-o", "StrictHostKeyChecking=accept-new"]),
-    "-o",
-    "ExitOnForwardFailure=yes",
-  ];
-  if (identityFile) args.push("-i", identityFile);
-  args.push(...sshOptions, host);
-
-  let child: Deno.ChildProcess;
-  try {
-    child = new Deno.Command("ssh", {
-      args,
-      stdin: "null",
-      stdout: "null",
-      stderr: "piped",
-    }).spawn();
-  } catch (e) {
-    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
-    throw new Error(
-      `SSH tunnel to ${host} failed: ssh command not available (${
-        e instanceof Error ? e.message : e
-      })`,
-    );
-  }
-
-  let processExited = false;
-  child.status.then(() => {
-    processExited = true;
-  });
-
-  const deadline = Date.now() + 10_000;
-  let ready = false;
-  while (Date.now() < deadline && !processExited) {
-    try {
-      await Deno.stat(localSocket);
-      ready = true;
-      break;
-    } catch {
-      await new Promise((r) => setTimeout(r, 100));
-    }
-  }
-
-  if (!ready) {
-    try {
-      child.kill("SIGTERM");
-    } catch { /* already dead */ }
-    let timerId: ReturnType<typeof setTimeout> | undefined;
-    const errText = await Promise.race([
-      drainStderr(child.stderr),
-      new Promise<string>((r) => {
-        timerId = setTimeout(() => r(""), 5_000);
-      }),
-    ]);
-    clearTimeout(timerId);
-    await child.status;
-    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
-    throw new Error(
-      `SSH tunnel to ${host} failed: ${
-        errText.trim() || "socket not created within 10s"
-      }`,
-    );
-  }
-
-  const inner = createTransport({
-    socketPath: localSocket,
-    apiVersion,
-    timeout,
-    auth,
-  });
-
+function spawn(args: string[]): SshProcess {
+  const child = new Deno.Command("ssh", {
+    args,
+    stdin: "null",
+    stdout: "null",
+    stderr: "piped",
+  }).spawn();
   return {
-    request: inner.request,
-    requestRaw: inner.requestRaw,
-    requestStream: inner.requestStream,
-    getAuthHeader: inner.getAuthHeader,
-    close() {
-      inner.close();
+    stderr: child.stderr,
+    exited: child.status.then(
+      ({ code, signal }): SshExit => ({ kind: "exited", code, signal }),
+      (error): SshExit => ({ kind: "failed", error }),
+    ),
+    kill(signal) {
       try {
-        child.kill("SIGTERM");
-      } catch { /* already dead */ }
-      Deno.remove(tempDir, { recursive: true }).catch(() => {});
+        child.kill(signal);
+      } catch (error) {
+        if (!(error instanceof TypeError)) throw error; // already terminated
+      }
     },
   };
+}
+
+async function canConnect(path: string): Promise<boolean> {
+  try {
+    (await Deno.connect({ transport: "unix", path })).close();
+    return true;
+  } catch (error) {
+    if (
+      error instanceof Deno.errors.NotFound ||
+      error instanceof Deno.errors.ConnectionRefused
+    ) return false;
+    throw error;
+  }
+}
+
+const runtime: SshRuntime = {
+  spawn,
+  makeTempDir: () => Deno.makeTempDir({ prefix: "podman-ssh-" }),
+  async removeDir(dir) {
+    try {
+      await Deno.remove(dir, { recursive: true });
+    } catch { // no-excuse-ok: catch — best-effort removal of a private temp dir.
+    }
+  },
+  canConnect,
+  createTransport,
+};
+
+export function createSshTransport(
+  opts: SshTransportOptions,
+): Promise<Transport> {
+  return openSshTunnel(runtime, opts);
 }

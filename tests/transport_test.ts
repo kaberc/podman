@@ -139,7 +139,7 @@ Deno.test("transport.request: builds correct URL with default apiVersion", async
     await t.request("GET", "/containers/json");
     assertEquals(
       capturedUrl,
-      "http://localhost/v4.0.0/libpod/containers/json",
+      "http://localhost/v6.0.0/libpod/containers/json",
     );
   } finally {
     s2.restore();
@@ -326,7 +326,7 @@ Deno.test("tcpTransport.request: builds correct URL from uri", async () => {
     await t.request("GET", "/containers/json");
     assertEquals(
       capturedUrl,
-      "http://192.168.1.100:8080/v4.0.0/libpod/containers/json",
+      "http://192.168.1.100:8080/v6.0.0/libpod/containers/json",
     );
   } finally {
     s.restore();
@@ -343,7 +343,7 @@ Deno.test("tcpTransport.request: strips trailing slash from uri", async () => {
   });
   try {
     await t.request("GET", "/info");
-    assertEquals(capturedUrl, "http://host:8080/v4.0.0/libpod/info");
+    assertEquals(capturedUrl, "http://host:8080/v6.0.0/libpod/info");
   } finally {
     s.restore();
     t.close();

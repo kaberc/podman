@@ -1,5 +1,6 @@
 import type { Transport } from "../transport.ts";
-import { createPodmanError, throwRawError } from "../types/errors.ts";
+import { createPodmanError } from "../types/errors.ts";
+import { readManifestPush } from "../internal/manifest-push.ts";
 import { buildQuery } from "../internal/query.ts";
 import type {
   IDResponse,
@@ -89,14 +90,16 @@ export class ManifestsApi {
     destination: string,
     query?: ManifestPushQuery,
   ): Promise<IDResponse> {
-    const path = `/manifests/${encodeURIComponent(nameOrId)}/push/${
+    const path = `/manifests/${encodeURIComponent(nameOrId)}/registry/${
       encodeURIComponent(destination)
     }${buildQuery(query)}`;
-    const headers: Record<string, string> = {};
     const authHeader = this.#t.getAuthHeader();
-    if (authHeader) headers["X-Registry-Auth"] = authHeader;
-    const res = await this.#t.requestRaw("POST", path, undefined, headers);
-    if (res.status !== 200) await throwRawError(res, "POST", path);
-    return (await res.json()) as IDResponse;
+    const stream = await this.#t.requestStream(
+      "POST",
+      path,
+      undefined,
+      authHeader ? { "X-Registry-Auth": authHeader } : {},
+    );
+    return await readManifestPush(stream, path);
   }
 }

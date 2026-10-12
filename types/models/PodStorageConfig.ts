@@ -3,9 +3,9 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { ImageVolume } from "./ImageVolume.ts";
-import type { Mount } from "./Mount.ts";
 import type { NamedVolume } from "./NamedVolume.ts";
 import type { OverlayVolume } from "./OverlayVolume.ts";
+import type { SpecsGoMount } from "./SpecsGoMount.ts";
 export type PodStorageConfig = {
   /**
    * Image volumes bind-mount a container-image mount into the pod's infra container.
@@ -18,7 +18,7 @@ export type PodStorageConfig = {
    * there are conflicts.
    * Optional.
    */
-  mounts?: Array<Mount>;
+  mounts?: Array<SpecsGoMount>;
   /**
    * Overlay volumes are named volumes that will be added to the pod.
    * Optional.

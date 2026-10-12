@@ -5,8 +5,6 @@
 import type { HealthcheckConfig } from "./HealthcheckConfig.ts";
 import type { HostConfig } from "./HostConfig.ts";
 import type { NetworkingConfig } from "./NetworkingConfig.ts";
-import type { PortSet } from "./PortSet.ts";
-import type { StrSlice } from "./StrSlice.ts";
 /**
  * CreateContainerConfig used when compatible endpoint creates a container
  */
@@ -15,29 +13,24 @@ export type CreateContainerConfig = {
   AttachStderr?: boolean;
   AttachStdin?: boolean;
   AttachStdout?: boolean;
-  Cmd?: StrSlice;
+  Cmd?: Array<string>;
   Domainname?: string;
-  Entrypoint?: StrSlice;
+  Entrypoint?: Array<string>;
   Env?: Array<string>;
   EnvMerge?: Array<string>;
-  ExposedPorts?: PortSet;
+  ExposedPorts?: Record<string, Record<string, unknown>>;
   Healthcheck?: HealthcheckConfig;
   HostConfig?: HostConfig;
   Hostname?: string;
   Image?: string;
   Labels?: Record<string, string>;
-  /**
-   * Mac Address of the container.
-   *
-   * Deprecated: this field is deprecated since API v1.44. Use EndpointSettings.MacAddress instead.
-   */
   MacAddress?: string;
   Name?: string;
   NetworkDisabled?: boolean;
   NetworkingConfig?: NetworkingConfig;
   OnBuild?: Array<string>;
   OpenStdin?: boolean;
-  Shell?: StrSlice;
+  Shell?: Array<string>;
   StdinOnce?: boolean;
   StopSignal?: string;
   StopTimeout?: number;

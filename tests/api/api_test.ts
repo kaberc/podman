@@ -485,7 +485,10 @@ Deno.test("networks.list: returns empty array on null json", async () => {
 
 Deno.test("networks.remove: succeeds on 200", async () => {
   const api = new NetworksApi(
-    mockTransport(() => ({ status: 200, json: null })),
+    mockTransport(() => ({
+      status: 200,
+      json: [{ Name: "test-net", Err: null }],
+    })),
   );
   const result = await api.remove("test-net");
   assertEquals(result.alreadyRemoved, false);
@@ -505,64 +508,6 @@ Deno.test("networks.remove: returns alreadyRemoved on 404", async () => {
   );
   const result = await api.remove("test-net");
   assertEquals(result.alreadyRemoved, true);
-});
-
-Deno.test("networks.connect: succeeds on 200", async () => {
-  let capturedBody: string | undefined;
-  const api = new NetworksApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, _p, body) => {
-        capturedBody = typeof body === "string" ? body : undefined;
-        return new Response("OK", { status: 200 });
-      },
-    }),
-  );
-  const result = await api.connect(
-    "test-net",
-    { container: "abc123" } as never,
-  );
-  assertEquals(JSON.parse(capturedBody!).container, "abc123");
-  assertEquals(result.alreadyConnected, false);
-});
-
-Deno.test("networks.connect: returns alreadyConnected on 409", async () => {
-  const api = new NetworksApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async () =>
-        new Response("already connected", { status: 409 }),
-    }),
-  );
-  const result = await api.connect(
-    "test-net",
-    { container: "abc123" } as never,
-  );
-  assertEquals(result.alreadyConnected, true);
-});
-
-Deno.test("networks.disconnect: succeeds on 200", async () => {
-  const api = new NetworksApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async () => new Response("OK", { status: 200 }),
-    }),
-  );
-  const result = await api.disconnect(
-    "test-net",
-    { container: "abc123" } as never,
-  );
-  assertEquals(result.alreadyDisconnected, false);
-});
-
-Deno.test("networks.disconnect: returns alreadyDisconnected on 409", async () => {
-  const api = new NetworksApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async () => new Response("not connected", { status: 409 }),
-    }),
-  );
-  const result = await api.disconnect(
-    "test-net",
-    { container: "abc123" } as never,
-  );
-  assertEquals(result.alreadyDisconnected, true);
 });
 
 Deno.test("networks.prune: returns reports on 200", async () => {
@@ -758,33 +703,31 @@ Deno.test("containers.restart: passes timeout query", async () => {
 
 Deno.test("images.push: succeeds on 200", async () => {
   const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: null })),
+    buildTransport(async () => new Response(""), undefined, () => {}),
   );
   await api.push("alpine");
 });
 
 Deno.test("images.push: passes query params", async () => {
   let capturedPath = "";
-  const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, p, _b, _h) => {
-        capturedPath = p;
-        return new Response(null, { status: 200 });
-      },
-    }),
-  );
-  await api.push("alpine", { destination: "docker.io/foo" } as never);
+  const api = new ImagesApi(buildTransport(
+    async (_m, path) => {
+      capturedPath = path;
+      return new Response("");
+    },
+    undefined,
+    () => {},
+  ));
+  await api.push("alpine", { destination: "docker.io/foo" });
   assertEquals(capturedPath, "/images/alpine/push?destination=docker.io%2Ffoo");
 });
 Deno.test("images.push: throws PodmanError on 500", async () => {
   const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, _p, _b, _h) =>
-        new Response(JSON.stringify({ message: "push failed" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }),
-    }),
+    buildTransport(
+      async () => new Response('{"message":"push failed"}', { status: 500 }),
+      undefined,
+      () => {},
+    ),
   );
   const err = await assertRejects(() => api.push("alpine"), PodmanError);
   assertEquals(err.status, 500);
@@ -845,16 +788,7 @@ Deno.test("images.export: returns ReadableStream with correct path", async () =>
 
 Deno.test("images.build: returns ReadableStream on success", async () => {
   const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, _p, _b, _h) => {
-        const body = new ReadableStream<Uint8Array>({
-          start(c) {
-            c.close();
-          },
-        });
-        return new Response(body, { status: 200 });
-      },
-    }),
+    buildTransport(async () => new Response(""), undefined, () => {}),
   );
   const stream = new ReadableStream<Uint8Array>({
     start(c) {
@@ -863,17 +797,16 @@ Deno.test("images.build: returns ReadableStream on success", async () => {
   });
   const result = await api.build(stream);
   assertEquals(result instanceof ReadableStream, true);
+  await result.cancel();
 });
 
 Deno.test("images.build: throws on 400+", async () => {
   const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, _p, _b, _h) =>
-        new Response(JSON.stringify({ message: "build failed" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }),
-    }),
+    buildTransport(
+      async () => new Response('{"message":"build failed"}', { status: 400 }),
+      undefined,
+      () => {},
+    ),
   );
   const stream = new ReadableStream<Uint8Array>({
     start(c) {

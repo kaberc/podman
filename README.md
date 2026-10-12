@@ -1,7 +1,7 @@
 # podman
 
-Typed Podman client for Deno and Node.js. Zero dependencies. Full libpod API
-with Unix socket, TCP, TLS, and SSH transports.
+Typed Podman client for Deno, Node.js, and Bun. Zero runtime dependencies. The
+libpod API with Unix socket, TCP, TLS, and SSH transports.
 
 ## Features
 
@@ -9,8 +9,9 @@ with Unix socket, TCP, TLS, and SSH transports.
   layer)
 - **Full type safety** — Types auto-generated from Podman's OpenAPI
   specification
-- **Zero dependencies** — No external packages on either runtime
-- **Dual runtime** — First-class support for both Deno and Node.js
+- **Zero runtime dependencies** — No external packages in the client
+- **Three runtimes** — Deno, Node.js, and Bun
+- **Native Bun transport** — Native fetch for Unix sockets and TLS
 - **4 transports** — Unix socket, TCP, TLS (mTLS), SSH tunnel
 - **13 API modules** — Containers, Images, Networks, Volumes, Pods, Secrets,
   System, Exec, Generate, Manifests, Kube, Artifacts, Quadlets
@@ -43,17 +44,32 @@ npm install @ostanin/podman
 import { createClient } from "@ostanin/podman";
 ```
 
+### Bun
+
+```sh
+bun add @ostanin/podman
+```
+
+```ts
+import { createClient } from "@ostanin/podman";
+```
+
 **Requirements:**
 
-- Deno 2.4+ or Node.js 18.18+
-- Podman with libpod API v4.0.0+
+- Deno 2.4+, Node.js 18.18+, or Bun 1.4.3+
+- Podman 6.0+ with the libpod API. Types use the stable Podman 6.1.3
+  specification
+
+The default API version is `6.0.0`. You can set `apiVersion` explicitly, but the
+client types describe Podman 6. See [CHANGELOG.md](CHANGELOG.md) for the 0.6
+migration changes.
 
 ## Quick Start
 
 ```ts
 // Deno
 import { createClient } from "jsr:@kaberc/podman";
-// Node.js
+// Node.js or Bun
 // import { createClient } from "@ostanin/podman";
 
 const podman = createClient({ socketPath: "/run/podman/podman.sock" });
@@ -90,12 +106,12 @@ podman.close();
 const podman = createClient({ socketPath: "/run/podman/podman.sock" });
 ```
 
-| Option       | Type     | Default   | Description                  |
-| ------------ | -------- | --------- | ---------------------------- |
-| `socketPath` | `string` | —         | Path to Podman's Unix socket |
-| `apiVersion` | `string` | `"4.0.0"` | Podman API version           |
-| `timeout`    | `number` | `30000`   | Request timeout (ms)         |
-| `auth`       | `object` | —         | Registry credentials         |
+| Option       | Type             | Default   | Description                   |
+| ------------ | ---------------- | --------- | ----------------------------- |
+| `socketPath` | `string`         | —         | Path to Podman's Unix socket  |
+| `apiVersion` | `string`         | `"6.0.0"` | Podman API version            |
+| `timeout`    | `number \| null` | `30000`   | Ordinary request timeout (ms) |
+| `auth`       | `object`         | —         | Registry credentials          |
 
 ### Cancellation and disposal
 
@@ -127,6 +143,17 @@ await podman.images.pull(
   },
 );
 ```
+
+Set `pullProgress: true` for structured Podman 6 progress reports. The callback
+receives `status` and `pullProgress`. The result contains the final image IDs.
+With `compatMode: true`, the callback receives Docker-style progress instead.
+The result is the final `Download complete` report, with a shortened image ID,
+not a native image summary. Podman rejects `compatMode: true` combined with
+`quiet: true` or `pullProgress: true`.
+
+Image and manifest pushes consume their reports before they resolve. They reject
+in-body errors even after HTTP 200. Pulls, pushes, and both build methods use
+the client signal, not the ordinary request timeout.
 
 For a context directory on the Podman host, `images.buildLocal` applies its
 ignore file without a context upload. Consume its reports with
@@ -180,16 +207,19 @@ const podman = createClient({ uri: "http://192.168.1.100:8080" });
 Enable the Podman API on the remote machine:
 
 ```sh
-podman system service --time=0 tcp:0.0.0.0:8080
+podman system service --time=0 tcp:127.0.0.1:8080
 ```
 
-| Option       | Type     | Default   | Description             |
-| ------------ | -------- | --------- | ----------------------- |
-| `uri`        | `string` | —         | HTTP/HTTPS endpoint     |
-| `apiVersion` | `string` | `"4.0.0"` | Podman API version      |
-| `timeout`    | `number` | `30000`   | Request timeout (ms)    |
-| `auth`       | `object` | —         | Registry credentials    |
-| `tls`        | `object` | —         | TLS options (see below) |
+The Podman API can control the host. Do not expose it on a public interface. Use
+an SSH tunnel or verified TLS with client certificates for remote access.
+
+| Option       | Type             | Default   | Description                   |
+| ------------ | ---------------- | --------- | ----------------------------- |
+| `uri`        | `string`         | —         | HTTP/HTTPS endpoint           |
+| `apiVersion` | `string`         | `"6.0.0"` | Podman API version            |
+| `timeout`    | `number \| null` | `30000`   | Ordinary request timeout (ms) |
+| `auth`       | `object`         | —         | Registry credentials          |
+| `tls`        | `object`         | —         | TLS options (see below)       |
 
 #### TLS (HTTPS)
 
@@ -206,7 +236,7 @@ const podman = createClient({
   },
 });
 
-// Node.js
+// Node.js or Bun
 import { readFileSync } from "node:fs";
 
 const podman = createClient({
@@ -238,16 +268,22 @@ import { createSshClient } from "@ostanin/podman"; // or jsr:@kaberc/podman
 const podman = await createSshClient({ host: "user@remote-server" });
 ```
 
-| Option             | Type       | Default                   | Description                        |
-| ------------------ | ---------- | ------------------------- | ---------------------------------- |
-| `host`             | `string`   | —                         | SSH destination (e.g. `user@host`) |
-| `remoteSocketPath` | `string`   | `/run/podman/podman.sock` | Socket path on remote machine      |
-| `port`             | `number`   | `22`                      | SSH port                           |
-| `identityFile`     | `string`   | —                         | Path to SSH private key            |
-| `sshOptions`       | `string[]` | `[]`                      | Extra SSH arguments                |
-| `apiVersion`       | `string`   | `"4.0.0"`                 | Podman API version                 |
-| `timeout`          | `number`   | `30000`                   | Request timeout (ms)               |
-| `auth`             | `object`   | —                         | Registry credentials               |
+| Option             | Type             | Default                   | Description                                  |
+| ------------------ | ---------------- | ------------------------- | -------------------------------------------- |
+| `host`             | `string`         | —                         | SSH destination (e.g. `user@host`)           |
+| `remoteSocketPath` | `string`         | `/run/podman/podman.sock` | Socket path on remote machine                |
+| `port`             | `number`         | `22`                      | SSH port                                     |
+| `identityFile`     | `string`         | —                         | Path to SSH private key                      |
+| `sshOptions`       | `string[]`       | `[]`                      | Extra SSH arguments                          |
+| `apiVersion`       | `string`         | `"6.0.0"`                 | Podman API version                           |
+| `timeout`          | `number \| null` | `30000`                   | Ordinary request timeout (ms)                |
+| `auth`             | `object`         | —                         | Registry credentials                         |
+| `signal`           | `AbortSignal`    | —                         | Cancel startup, requests, and the SSH tunnel |
+
+SSH clients use the same cancellation contract as Unix and TCP clients.
+`PodmanSshError` includes the host and bounded SSH diagnostics. An unexpected
+SSH exit closes the client. `close()` starts tunnel cleanup and returns
+immediately. Cleanup ends the child before it removes the private directory.
 
 ```ts
 const podman = await createSshClient({
@@ -331,17 +367,17 @@ for private registry operations.
 
 ### Networks
 
-| Method                       | Description                                                                       |
-| ---------------------------- | --------------------------------------------------------------------------------- |
-| `create(opts)`               | Create a network                                                                  |
-| `inspect(nameOrId)`          | Inspect a network (returns `null` on 404)                                         |
-| `list(query?)`               | List networks                                                                     |
-| `remove(nameOrId)`           | Remove a network (idempotent; returns `{ alreadyRemoved }`)                       |
-| `exists(nameOrId)`           | Check if network exists                                                           |
-| `update(nameOrId, opts)`     | Update network DNS servers (Podman 5.0+)                                          |
-| `connect(nameOrId, opts)`    | Connect container to network (idempotent; returns `{ alreadyConnected }`)         |
-| `disconnect(nameOrId, opts)` | Disconnect container from network (idempotent; returns `{ alreadyDisconnected }`) |
-| `prune(query?)`              | Prune unused networks                                                             |
+| Method                       | Description                                                 |
+| ---------------------------- | ----------------------------------------------------------- |
+| `create(opts, query?)`       | Create a network                                            |
+| `inspect(nameOrId)`          | Inspect a network (returns `null` on 404)                   |
+| `list(query?)`               | List networks                                               |
+| `remove(nameOrId)`           | Remove a network (idempotent; returns `{ alreadyRemoved }`) |
+| `exists(nameOrId)`           | Check if network exists                                     |
+| `update(nameOrId, opts)`     | Update network DNS servers (Podman 5.0+)                    |
+| `connect(nameOrId, opts)`    | Connect a container. A repeated connection throws           |
+| `disconnect(nameOrId, opts)` | Disconnect a container. A repeated disconnection throws     |
+| `prune(query?)`              | Prune unused networks                                       |
 
 ### Volumes
 
@@ -352,7 +388,8 @@ for private registry operations.
 | `list(query?)`             | List volumes                                               |
 | `remove(nameOrId, query?)` | Remove a volume (idempotent; returns `{ alreadyRemoved }`) |
 | `exists(nameOrId)`         | Check if volume exists                                     |
-| `prune(query?)`            | Prune unused volumes                                       |
+| `prune(query?)`            | Prune unused anonymous volumes                             |
+| `rename(nameOrId, query)`  | Rename a volume (Podman 6+)                                |
 | `export(nameOrId)`         | Export volume as tar archive                               |
 | `import(nameOrId, body)`   | Import tar archive into volume                             |
 
@@ -392,7 +429,7 @@ for private registry operations.
 | `info()`               | Get Podman system information                |
 | `version()`            | Get Podman version                           |
 | `ping()`               | Ping Podman (returns boolean)                |
-| `prune()`              | Prune unused system data                     |
+| `prune(query?)`        | Prune unused system data                     |
 | `df()`                 | Get disk usage (containers, images, volumes) |
 | `events(query?)`       | Stream system events (raw bytes)             |
 | `parsedEvents(query?)` | Stream system events as parsed JSON          |
@@ -494,13 +531,6 @@ surfaces 304.
 ```ts
 import { PodmanError } from "@ostanin/podman"; // or jsr:@kaberc/podman
 
-const { alreadyConnected } = await podman.networks.connect("my-net", {
-  container: "my-ctr",
-});
-if (alreadyConnected) {
-  // Already attached — fine.
-}
-
 try {
   await podman.system.check();
 } catch (e) {
@@ -541,7 +571,7 @@ The npm package is built from the Deno source using
 [`dnt`](https://github.com/denoland/dnt):
 
 ```sh
-deno task build-npm 0.4.1
+deno task build-npm 0.6.0
 ```
 
 This outputs a complete npm package to `./npm/` with ESM, CJS, and type

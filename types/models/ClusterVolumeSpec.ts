@@ -5,8 +5,8 @@
 import type { AccessMode } from "./AccessMode.ts";
 import type { Availability } from "./Availability.ts";
 import type { CapacityRange } from "./CapacityRange.ts";
-import type { Secret } from "./Secret.ts";
 import type { TopologyRequirement } from "./TopologyRequirement.ts";
+import type { VolumeSecret } from "./VolumeSecret.ts";
 export type ClusterVolumeSpec = {
   AccessMode?: AccessMode;
   AccessibilityRequirements?: TopologyRequirement;
@@ -25,5 +25,5 @@ export type ClusterVolumeSpec = {
    * Secrets defines Swarm Secrets that are passed to the CSI storage plugin
    * when operating on this volume.
    */
-  Secrets?: Array<Secret>;
+  Secrets?: Array<VolumeSecret>;
 };

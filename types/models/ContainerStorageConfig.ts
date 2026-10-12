@@ -6,11 +6,11 @@ import type { ArtifactVolume } from "./ArtifactVolume.ts";
 import type { ImageVolume } from "./ImageVolume.ts";
 import type { LinuxDevice } from "./LinuxDevice.ts";
 import type { LinuxDeviceCgroup } from "./LinuxDeviceCgroup.ts";
-import type { Mount } from "./Mount.ts";
 import type { NamedVolume } from "./NamedVolume.ts";
 import type { Namespace } from "./Namespace.ts";
 import type { OverlayVolume } from "./OverlayVolume.ts";
-import type { Secret } from "./Secret.ts";
+import type { SpecgenSecret } from "./SpecgenSecret.ts";
+import type { SpecsGoMount } from "./SpecsGoMount.ts";
 /**
  * ContainerStorageConfig contains information on the storage configuration of a
  * container.
@@ -48,6 +48,12 @@ export type ContainerStorageConfig = {
    * Optional.
    */
   devices_from?: Array<string>;
+  /**
+   * GPUs contains GPU device identifiers for CDI resolution.
+   * These will be resolved to full CDI device paths on the server side.
+   * Optional.
+   */
+  gpus?: Array<string>;
   /**
    * HostDeviceList is used to recreate the mounted device on inherited containers
    */
@@ -111,7 +117,7 @@ export type ContainerStorageConfig = {
    * there are conflicts.
    * Optional.
    */
-  mounts?: Array<Mount>;
+  mounts?: Array<SpecsGoMount>;
   /**
    * Overlay volumes are named volumes that will be added to the container.
    * Optional.
@@ -151,7 +157,7 @@ export type ContainerStorageConfig = {
    * Secrets are the secrets that will be added to the container
    * Optional.
    */
-  secrets?: Array<Secret>;
+  secrets?: Array<SpecgenSecret>;
   /**
    * ShmSize is the size of the tmpfs to mount in at /dev/shm, in bytes.
    * Conflicts with ShmSize if IpcNS is not private.

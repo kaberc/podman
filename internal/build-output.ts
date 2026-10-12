@@ -12,6 +12,16 @@ export interface BuildReport {
 
 export type BuildReportHandler = (report: BuildReport) => void | Promise<void>;
 
+const buildPaths = new WeakMap<ReadableStream<Uint8Array>, string>();
+
+export function registerBuildOutput(
+  stream: ReadableStream<Uint8Array>,
+  path: string,
+): ReadableStream<Uint8Array> {
+  buildPaths.set(stream, path);
+  return stream;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -64,6 +74,7 @@ function parseReport(value: unknown): BuildReport {
  * success. A report carrying `error` or `errorDetail` is delivered, then
  * rejects with a {@link PodmanError} even though the HTTP status was 200.
  * Malformed or oversized lines reject with {@link PodmanStreamError}.
+ * SDK build streams retain their request path; standalone streams use `/build`.
  */
 export async function collectBuildOutput(
   stream: ReadableStream<Uint8Array>,
@@ -79,7 +90,7 @@ export async function collectBuildOutput(
         status: 200,
         message: failure,
         method: "POST",
-        path: "/build",
+        path: buildPaths.get(stream) ?? "/build",
       });
     }
   }

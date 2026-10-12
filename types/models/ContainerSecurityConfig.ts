@@ -56,9 +56,9 @@ export type ContainerSecurityConfig = {
   /**
    * Privileged is whether the container is privileged.
    * Privileged does the following:
-   * Adds all devices on the system to the container.
-   * Adds all capabilities to the container.
-   * Disables Seccomp, SELinux, and Apparmor confinement.
+   * - Adds all devices on the system to the container.
+   * - Adds all capabilities to the container.
+   * - Disables Seccomp, SELinux, and Apparmor confinement.
    * (Though SELinux can be manually re-enabled).
    * TODO: this conflicts with things.
    * TODO: this does more.

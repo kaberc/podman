@@ -5,12 +5,12 @@
 import type { IDMappingOptions } from "./IDMappingOptions.ts";
 import type { ImageVolume } from "./ImageVolume.ts";
 import type { LinuxResources } from "./LinuxResources.ts";
-import type { Mount } from "./Mount.ts";
 import type { NamedVolume } from "./NamedVolume.ts";
 import type { Namespace } from "./Namespace.ts";
 import type { OverlayVolume } from "./OverlayVolume.ts";
 import type { PerNetworkOptions } from "./PerNetworkOptions.ts";
 import type { PortMapping } from "./PortMapping.ts";
+import type { SpecsGoMount } from "./SpecsGoMount.ts";
 /**
  * PodSpecGenerator describes options to create a pod
  */
@@ -31,16 +31,6 @@ export type PodSpecGenerator = {
    * Optional.
    */
   cgroup_parent?: string;
-  /**
-   * CNINetworks is a list of CNI networks to join the container to.
-   * If this list is empty, the default CNI network will be joined
-   * instead. If at least one entry is present, we will not join the
-   * default network (unless it is part of this list).
-   * Only available if NetNS is set to bridge.
-   * Optional.
-   * Deprecated: as of podman 4.0 use "Networks" instead.
-   */
-  cni_networks?: Array<string>;
   /**
    * DNSOption is a set of DNS options that will be used in the infra
    * container's resolv.conf, which will, by default, be shared with all
@@ -147,7 +137,7 @@ export type PodSpecGenerator = {
    * there are conflicts.
    * Optional.
    */
-  mounts?: Array<Mount>;
+  mounts?: Array<SpecsGoMount>;
   /**
    * Name is the name of the pod.
    * If not provided, a name will be generated when the pod is created.
@@ -204,7 +194,7 @@ export type PodSpecGenerator = {
    * PortMappings is a set of ports to map into the infra container.
    * As, by default, containers share their network with the infra
    * container, this will forward the ports to the entire pod.
-   * Only available if NetNS is set to Bridge, Slirp, or Pasta.
+   * Only available if NetNS is set to Bridge or Pasta.
    * Optional.
    */
   portmappings?: Array<PortMapping>;

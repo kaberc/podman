@@ -4,12 +4,12 @@
 /* eslint-disable */
 import type { NetworkPruneReport } from "./NetworkPruneReport.ts";
 import type { PodPruneReport } from "./PodPruneReport.ts";
-import type { PruneReport } from "./PruneReport.ts";
+import type { ReportsPruneReport } from "./ReportsPruneReport.ts";
 export type SystemPruneReport = {
-  ContainerPruneReports?: Array<PruneReport>;
-  ImagePruneReports?: Array<PruneReport>;
+  ContainerPruneReports?: Array<ReportsPruneReport>;
+  ImagePruneReports?: Array<ReportsPruneReport>;
   NetworkPruneReports?: Array<NetworkPruneReport>;
   PodPruneReport?: Array<PodPruneReport>;
   ReclaimedSpace?: number;
-  VolumePruneReports?: Array<PruneReport>;
+  VolumePruneReports?: Array<ReportsPruneReport>;
 };

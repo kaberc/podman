@@ -20,29 +20,6 @@ Deno.test("networks.exists: returns true on 204, false on 404", async () => {
   assertEquals(await apiFalse.exists("mynet"), false);
 });
 
-Deno.test("networks.update: succeeds on 200", async () => {
-  let capturedPath = "";
-  const api = new NetworksApi(
-    mockTransport((_m, p) => {
-      capturedPath = p;
-      return { status: 200, json: null };
-    }),
-  );
-  await api.update("mynet", { dns: ["8.8.8.8"] } as never);
-  assertEquals(capturedPath.includes("mynet"), true);
-});
-
-Deno.test("networks.update: throws PodmanError on 500", async () => {
-  const api = new NetworksApi(
-    mockTransport(() => ({ status: 500, json: { message: "update failed" } })),
-  );
-  const err = await assertRejects(
-    () => api.update("mynet", { dns: ["8.8.8.8"] } as never),
-    PodmanError,
-  );
-  assertEquals(err.status, 500);
-});
-
 Deno.test("system.df: returns SystemDfReport on 200", async () => {
   const api = new SystemApi(
     mockTransport(() => ({

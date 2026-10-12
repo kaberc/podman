@@ -1,4 +1,4 @@
-import { build, emptyDir } from "jsr:@deno/dnt";
+import { build, emptyDir } from "@deno/dnt";
 
 const version = Deno.args[0];
 if (!version) {
@@ -28,27 +28,14 @@ for (const dir of SOURCE_DIRS) {
   await copyDir(dir, `${TEMP}/${dir}`);
 }
 
-await Deno.copyFile("_node/transport.ts", `${TEMP}/transport.ts`);
-await Deno.copyFile("_node/node-request.ts", `${TEMP}/node-request.ts`);
-await Deno.copyFile("_node/ssh_transport.ts", `${TEMP}/ssh_transport.ts`);
-
-const tempTransport = await Deno.readTextFile(`${TEMP}/transport.ts`);
-await Deno.writeTextFile(
-  `${TEMP}/transport.ts`,
-  tempTransport.replaceAll(
-    `from "../`,
-    `from "./`,
-  ),
-);
-
-const tempSshTransport = await Deno.readTextFile(`${TEMP}/ssh_transport.ts`);
-await Deno.writeTextFile(
-  `${TEMP}/ssh_transport.ts`,
-  tempSshTransport.replaceAll(
-    `from "../transport_core.ts"`,
-    `from "./transport_core.ts"`,
-  ),
-);
+for await (const entry of Deno.readDir("_node")) {
+  if (!entry.isFile || !entry.name.endsWith(".ts")) continue;
+  const source = await Deno.readTextFile(`_node/${entry.name}`);
+  await Deno.writeTextFile(
+    `${TEMP}/${entry.name}`,
+    source.replaceAll(`from "../`, `from "./`),
+  );
+}
 
 await build({
   entryPoints: [`${TEMP}/mod.ts`],
@@ -66,10 +53,11 @@ await build({
     name: "@ostanin/podman",
     version,
     description:
-      "Typed Podman client for Node.js. Full libpod API — containers, images, pods, networks, volumes, secrets, exec, manifests, kube, artifacts, quadlets.",
+      "Typed Podman client for Node.js and Bun. Full libpod API — containers, images, pods, networks, volumes, secrets, exec, manifests, kube, artifacts, quadlets.",
     license: "MIT",
     engines: {
       node: ">=18.18.0",
+      bun: ">=1.4.3",
     },
     repository: {
       type: "git",
@@ -85,7 +73,7 @@ await build({
       "typescript",
     ],
     devDependencies: {
-      "@types/node": "^22.5.0",
+      "@types/node": "22.20.5",
     },
   },
   postBuild() {

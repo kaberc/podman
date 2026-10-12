@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { DriverData } from "./DriverData.ts";
+import type { DefineDriverData } from "./DefineDriverData.ts";
 import type { InspectContainerConfig } from "./InspectContainerConfig.ts";
 import type { InspectContainerHostConfig } from "./InspectContainerHostConfig.ts";
 import type { InspectContainerState } from "./InspectContainerState.ts";
@@ -26,7 +26,7 @@ export type InspectContainerData = {
   Driver?: string;
   EffectiveCaps?: Array<string>;
   ExecIDs?: Array<string>;
-  GraphDriver?: DriverData;
+  GraphDriver?: DefineDriverData;
   HostConfig?: InspectContainerHostConfig;
   HostnamePath?: string;
   HostsPath?: string;

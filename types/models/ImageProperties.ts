@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Identity } from "./Identity.ts";
 import type { Platform } from "./Platform.ts";
 export type ImageProperties = {
   /**
@@ -9,6 +10,7 @@ export type ImageProperties = {
    * using this image.
    */
   Containers: Array<string>;
+  Identity?: Identity;
   Platform: Platform;
   Size?: {
     /**

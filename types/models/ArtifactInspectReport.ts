@@ -2,9 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Digest } from "./Digest.ts";
 import type { OCI1 } from "./OCI1.ts";
 export type ArtifactInspectReport = {
-  Digest?: string;
+  Digest?: Digest;
   Manifest?: OCI1;
   Name?: string;
 };

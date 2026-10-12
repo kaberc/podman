@@ -1,54 +1,13 @@
 /**
- * Gated integration smoke test — requires a live Podman socket and --allow-net.
- * Skipped when no socket is found or Podman is unreachable.
- * Override socket path with PODMAN_SOCK env var.
+ * Live integration tests require PODMAN_SOCK and Podman 6.
+ * With no explicit socket, the tests are skipped. An invalid target fails.
  *
  * deno test --allow-read --allow-write --allow-run --allow-env --allow-net integration_test.ts
  */
 
 import { assertEquals } from "@std/assert";
-import { createClient, type PodmanClient, PodmanError } from "../mod.ts";
-
-function findSocket(): string | null {
-  const rootful = "/run/podman/podman.sock";
-  let xdg: string | undefined;
-  let explicit: string | undefined;
-  try {
-    xdg = Deno.env.get("XDG_RUNTIME_DIR");
-    explicit = Deno.env.get("PODMAN_SOCK");
-  } catch {
-    // --allow-env not granted — fall back to rootful socket only
-  }
-
-  const rootless = xdg ? `${xdg}/podman/podman.sock` : null;
-  for (const p of [explicit, rootless, rootful]) {
-    if (!p) continue;
-    try {
-      if (Deno.statSync(p)) return p;
-    } catch { /* not found */ }
-  }
-  return null;
-}
-
-let client: PodmanClient | null = null;
-let skip = true;
-
-const socketPath = findSocket();
-if (socketPath) {
-  const probe = createClient({ socketPath });
-  try {
-    if (await probe.system.ping()) {
-      skip = false;
-      client = probe;
-    }
-  } catch {
-    probe.close();
-  }
-}
-
-function getClient(): PodmanClient {
-  return client!;
-}
+import { PodmanError } from "../mod.ts";
+import { getClient, skip } from "./live_podman.ts";
 
 // ---------------------------------------------------------------------------
 // Read-only tests — safe, no side effects

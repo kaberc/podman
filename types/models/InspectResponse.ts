@@ -4,11 +4,12 @@
 /* eslint-disable */
 import type { Config } from "./Config.ts";
 import type { Descriptor } from "./Descriptor.ts";
-import type { DriverData } from "./DriverData.ts";
 import type { HostConfig } from "./HostConfig.ts";
 import type { MountPoint } from "./MountPoint.ts";
 import type { NetworkSettings } from "./NetworkSettings.ts";
 import type { State } from "./State.ts";
+import type { Storage } from "./Storage.ts";
+import type { StorageDriverData } from "./StorageDriverData.ts";
 /**
  * endpoint.
  */
@@ -19,7 +20,7 @@ export type InspectResponse = {
   Created?: string;
   Driver?: string;
   ExecIDs?: Array<string>;
-  GraphDriver?: DriverData;
+  GraphDriver?: StorageDriverData;
   HostConfig?: HostConfig;
   HostnamePath?: string;
   HostsPath?: string;
@@ -39,4 +40,5 @@ export type InspectResponse = {
   SizeRootFs?: number;
   SizeRw?: number;
   State?: State;
+  Storage?: Storage;
 };

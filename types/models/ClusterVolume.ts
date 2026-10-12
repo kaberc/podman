@@ -5,7 +5,7 @@
 import type { ClusterVolumeSpec } from "./ClusterVolumeSpec.ts";
 import type { Info } from "./Info.ts";
 import type { PublishStatus } from "./PublishStatus.ts";
-import type { Version } from "./Version.ts";
+import type { SwarmVersion } from "./SwarmVersion.ts";
 /**
  * ClusterVolume contains options and information specific to, and only present
  * on, Swarm CSI cluster volumes.
@@ -26,5 +26,5 @@ export type ClusterVolume = {
   PublishStatus?: Array<PublishStatus>;
   Spec?: ClusterVolumeSpec;
   UpdatedAt?: string;
-  Version?: Version;
+  Version?: SwarmVersion;
 };

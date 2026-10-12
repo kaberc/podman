@@ -8,6 +8,7 @@
 import {
   type AuthOption,
   buildTransport,
+  DEFAULT_API_VERSION,
   type DoFetchFn,
   type Transport,
 } from "./transport_core.ts";
@@ -29,7 +30,8 @@ export interface TransportOptions {
 }
 
 export function createTransport(opts: TransportOptions): Transport {
-  const { socketPath, apiVersion = "4.0.0", timeout = 30_000 } = opts;
+  const { socketPath, apiVersion = DEFAULT_API_VERSION, timeout = 30_000 } =
+    opts;
 
   const client = Deno.createHttpClient({
     proxy: { transport: "unix", path: socketPath },
@@ -73,7 +75,7 @@ export interface TcpTransportOptions {
 }
 
 export function createTcpTransport(opts: TcpTransportOptions): Transport {
-  const { uri, apiVersion = "4.0.0", timeout = 30_000 } = opts;
+  const { uri, apiVersion = DEFAULT_API_VERSION, timeout = 30_000 } = opts;
   const authHeader = opts.auth ? btoa(JSON.stringify(opts.auth)) : undefined;
   const base = `${uri.replace(/\/+$/, "")}/v${apiVersion}/libpod`;
 

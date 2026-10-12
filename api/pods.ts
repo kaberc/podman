@@ -151,7 +151,9 @@ export class PodsApi {
   }
 
   /** Get resource usage statistics for the pod's containers. */
-  async stats(query?: PodStatsQuery): Promise<PodStatsReport[]> {
+  async stats(
+    query?: Omit<PodStatsQuery, "stream"> & { readonly stream?: false },
+  ): Promise<PodStatsReport[]> {
     const path = `/pods/stats${buildQuery(query)}`;
     const { status, json } = await this.#t.request("GET", path);
     if (status !== 200) throw createPodmanError(status, json, "GET", path);

@@ -14,7 +14,6 @@ import type { LinuxResources } from "./LinuxResources.ts";
 import type { LinuxThrottleDevice } from "./LinuxThrottleDevice.ts";
 import type { LinuxWeightDevice } from "./LinuxWeightDevice.ts";
 import type { LogConfigLibpod } from "./LogConfigLibpod.ts";
-import type { Mount } from "./Mount.ts";
 import type { NamedVolume } from "./NamedVolume.ts";
 import type { Namespace } from "./Namespace.ts";
 import type { OverlayVolume } from "./OverlayVolume.ts";
@@ -22,8 +21,9 @@ import type { PerNetworkOptions } from "./PerNetworkOptions.ts";
 import type { PortMapping } from "./PortMapping.ts";
 import type { POSIXRlimit } from "./POSIXRlimit.ts";
 import type { Schema2HealthConfig } from "./Schema2HealthConfig.ts";
-import type { Secret } from "./Secret.ts";
 import type { Signal } from "./Signal.ts";
+import type { SpecgenSecret } from "./SpecgenSecret.ts";
+import type { SpecsGoMount } from "./SpecsGoMount.ts";
 import type { StartupHealthCheck } from "./StartupHealthCheck.ts";
 /**
  * SpecGenerator creates an OCI spec and Libpod configuration options to create
@@ -96,16 +96,6 @@ export type SpecGenerator = {
    * Optional.
    */
   chroot_directories?: Array<string>;
-  /**
-   * CNINetworks is a list of CNI networks to join the container to.
-   * If this list is empty, the default CNI network will be joined
-   * instead. If at least one entry is present, we will not join the
-   * default network (unless it is part of this list).
-   * Only available if NetNS is set to bridge.
-   * Optional.
-   * Deprecated: as of podman 4.0 use "Networks" instead.
-   */
-  cni_networks?: Array<string>;
   /**
    * Command is the container's command.
    * If not given and Image is specified, this will be populated by the
@@ -212,11 +202,17 @@ export type SpecGenerator = {
    * protocol i.e map[uint16]string. Allowed protocols are "tcp", "udp", and "sctp", or some
    * combination of the three separated by commas.
    * If protocol is set to "" we will assume TCP.
-   * Only available if NetNS is set to Bridge or Slirp, and
+   * Only available if NetNS is set to Bridge or Pasta, and
    * PublishExposedPorts is set.
    * Optional.
    */
-  expose?: unknown;
+  expose?: Record<string, string>;
+  /**
+   * GPUs contains GPU device identifiers for CDI resolution.
+   * These will be resolved to full CDI device paths on the server side.
+   * Optional.
+   */
+  gpus?: Array<string>;
   /**
    * GroupEntry specifies an arbitrary string to append to the container's /etc/group file.
    * Optional.
@@ -367,7 +363,7 @@ export type SpecGenerator = {
    * there are conflicts.
    * Optional.
    */
-  mounts?: Array<Mount>;
+  mounts?: Array<SpecsGoMount>;
   /**
    * Name is the name the container will be given.
    * If no name is provided, one will be randomly generated.
@@ -380,6 +376,13 @@ export type SpecGenerator = {
    * Optional.
    */
   network_options?: Record<string, Array<string>>;
+  /**
+   * The order that networks will be configured in.
+   * If not set, alphabetical order based on network name will be used.
+   * If set: Must be the same length as Networks and its contents must be every key in the Networks map.
+   * Optional.
+   */
+  networkOrder?: Array<string>;
   /**
    * NoNewPrivileges is whether the container will set the no new
    * privileges flag on create, which disables gaining additional
@@ -419,16 +422,16 @@ export type SpecGenerator = {
   pod?: string;
   /**
    * PortBindings is a set of ports to map into the container.
-   * Only available if NetNS is set to bridge, slirp, or pasta.
+   * Only available if NetNS is set to bridge or pasta.
    * Optional.
    */
   portmappings?: Array<PortMapping>;
   /**
    * Privileged is whether the container is privileged.
    * Privileged does the following:
-   * Adds all devices on the system to the container.
-   * Adds all capabilities to the container.
-   * Disables Seccomp, SELinux, and Apparmor confinement.
+   * - Adds all devices on the system to the container.
+   * - Adds all capabilities to the container.
+   * - Disables Seccomp, SELinux, and Apparmor confinement.
    * (Though SELinux can be manually re-enabled).
    * TODO: this conflicts with things.
    * TODO: this does more.
@@ -444,7 +447,7 @@ export type SpecGenerator = {
    * random unused ports (guaranteed to be above 1024) on the host.
    * This is based on ports set in Expose below, and unknown ports specified
    * by the Image (if one is given).
-   * Only available if NetNS is set to Bridge or Slirp.
+   * Only available if NetNS is set to Bridge or Pasta.
    * Optional.
    */
   publish_image_ports?: boolean;
@@ -553,7 +556,7 @@ export type SpecGenerator = {
    * Secrets are the secrets that will be added to the container
    * Optional.
    */
-  secrets?: Array<Secret>;
+  secrets?: Array<SpecgenSecret>;
   /**
    * SelinuxProcessLabel is the process label the container will use.
    * If SELinux is enabled and this is not specified, a label will be

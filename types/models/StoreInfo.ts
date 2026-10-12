@@ -9,7 +9,6 @@ import type { ImageStore } from "./ImageStore.ts";
  * attributes
  */
 export type StoreInfo = {
-  configFile?: string;
   containerStore?: ContainerStore;
   graphDriverName?: string;
   graphOptions?: Record<string, unknown>;
