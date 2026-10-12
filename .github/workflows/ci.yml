@@ -117,6 +117,9 @@ jobs:
       - run: deno task build-npm 0.0.0-ci
       - run: node scripts/test_node.mjs
       - run: bun scripts/test_node.mjs
+      - name: Show Podman diagnostics on failure
+        if: failure()
+        run: cat "$RUNNER_TEMP/podman6/service.log"
       - name: Stop Podman
         if: always()
         run: scripts/stop_podman_ci.sh "$RUNNER_TEMP/podman6"

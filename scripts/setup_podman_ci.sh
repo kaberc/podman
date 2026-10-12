@@ -11,7 +11,7 @@ work_dir=$(realpath -m "${2:?work directory}")
 
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
-  build-essential pkg-config libseccomp-dev podman crun conmon uidmap apparmor
+  build-essential pkg-config libseccomp-dev podman crun conmon uidmap apparmor dbus-user-session
 
 commit=$(git -C "$source_dir" rev-parse HEAD)
 mkdir -p "$work_dir"
@@ -62,6 +62,7 @@ cat >"$work_dir/containers.conf" <<CONF
 netns = "bridge"
 
 [engine]
+cgroup_manager = "systemd"
 runtime = "$bin_dir/crun"
 helper_binaries_dir = ["$bin_dir", "/usr/lib/podman", "/usr/libexec/podman"]
 CONF
@@ -71,6 +72,16 @@ export XDG_RUNTIME_DIR="$runtime"
 export XDG_CONFIG_HOME="$home/.config"
 export XDG_DATA_HOME="$home/.local/share"
 export CONTAINERS_CONF="$work_dir/containers.conf"
+
+uid=$(id -u)
+sudo loginctl enable-linger "$(id -un)"
+sudo systemctl start "user@$uid.service"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus"
+for _ in $(seq 1 50); do
+  [ -S "/run/user/$uid/bus" ] && break
+  sleep 0.2
+done
+[ -S "/run/user/$uid/bus" ] || { echo "User session bus did not start"; exit 1; }
 
 socket="$runtime/podman.sock"
 RUNNER_TRACKING_ID="" setsid aa-exec -p podman -- "$work_dir/podman6" system service --time=0 \
@@ -85,6 +96,7 @@ done
 
 curl --fail --silent --unix-socket "$socket" http://d/v6.0.0/libpod/_ping >/dev/null
 "$work_dir/podman6" --version
+aa-exec -p podman -- "$work_dir/podman6" info --debug
 
 if [ -n "${GITHUB_ENV:-}" ]; then
   echo "PODMAN_SOCK=$socket" >>"$GITHUB_ENV"
