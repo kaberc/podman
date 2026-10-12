@@ -36,6 +36,13 @@ fetch_helper() {
 }
 fetch_helper netavark v2.0.0 d8bc342c38382029e7e12256120ac0f7676dcc063aa1e7259189bb69cc869563
 fetch_helper aardvark-dns v2.0.0 fdaa3665ce58337fe597e0822e24de97528529d1a39fa6b655aa656c8ad33086
+curl --fail --silent --location \
+  https://github.com/containers/crun/releases/download/1.21/crun-1.21-linux-amd64 \
+  -o "$work_dir/crun"
+echo "322c6c94b33a749ccd9f6f5ad48b0dd976eef559bbcfe15afd507a289dcdbe91  $work_dir/crun" \
+  | sha256sum --check --status
+install -m 0755 "$work_dir/crun" "$bin_dir/crun"
+"$bin_dir/crun" --version | grep -F 'crun version 1.21'
 
 curl --fail --silent --location \
   https://passt.top/passt/snapshot/passt-2026_01_20.386b5f5.tar.gz \
@@ -55,6 +62,7 @@ cat >"$work_dir/containers.conf" <<CONF
 netns = "bridge"
 
 [engine]
+runtime = "$bin_dir/crun"
 helper_binaries_dir = ["$bin_dir", "/usr/lib/podman", "/usr/libexec/podman"]
 CONF
 
