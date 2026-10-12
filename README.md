@@ -113,6 +113,40 @@ using podman = createClient({
 ```
 
 The request `timeout` does not limit long-lived streams from `requestStream`.
+Set `timeout: null` when an operation signal owns the deadline for ordinary
+requests too.
+
+Image pulls accept an awaited report callback and reject errors in successful
+HTTP responses:
+
+```ts
+await podman.images.pull(
+  { reference: "docker.io/library/alpine:latest" },
+  (report) => {
+    if (report.stream) console.log(report.stream);
+  },
+);
+```
+
+For a context directory on the Podman host, `images.buildLocal` applies its
+ignore file without a context upload. Consume its reports with
+`collectBuildOutput` to detect build errors:
+
+```ts
+import { collectBuildOutput } from "@ostanin/podman";
+
+await collectBuildOutput(
+  await podman.images.buildLocal({
+    localcontextdir: "/absolute/context",
+    dockerfile: "/absolute/context/Dockerfile",
+    t: "localhost/example:latest",
+  }),
+  (report) => {
+    if (report.stream) console.log(report.stream);
+  },
+);
+```
+
 Client cancellation and disposal still apply to these streams. Response streams
 support default readers, not BYOB readers. TypeScript consumers need
 `Disposable` from `ESNext.Disposable` (TypeScript 5.2 or later), or recent Node

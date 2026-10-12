@@ -19,7 +19,7 @@ export type {
 export interface TransportOptions {
   socketPath: string;
   apiVersion?: string;
-  timeout?: number;
+  timeout?: number | null;
   auth?: AuthOption;
   /** Aborting closes the transport and cancels every request in flight. */
   signal?: AbortSignal;
@@ -56,7 +56,7 @@ export interface TlsOptions {
 export interface TcpTransportOptions {
   uri: string;
   apiVersion?: string;
-  timeout?: number;
+  timeout?: number | null;
   auth?: AuthOption;
   tls?: TlsOptions;
   /** Aborting closes the transport and cancels every request in flight. */
@@ -87,12 +87,14 @@ export function createTcpTransport(opts: TcpTransportOptions): Transport {
       );
     }
 
-    return await fetch(`${base}${path}`, {
+    const request: RequestInit & { readonly duplex?: "half" } = {
       method,
       headers: init?.headers,
       body: init?.body,
       signal: init?.signal,
-    });
+      ...(init?.body instanceof ReadableStream ? { duplex: "half" } : {}),
+    };
+    return await fetch(`${base}${path}`, request);
   };
 
   return buildTransport(doFetch, authHeader, () => agent?.destroy(), {

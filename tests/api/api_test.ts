@@ -10,6 +10,7 @@ import { SystemApi } from "../../api/system.ts";
 import { ExecApi } from "../../api/exec.ts";
 import { GenerateApi } from "../../api/generate.ts";
 import { mockTransport } from "./_test_helpers.ts";
+import { buildTransport } from "../../transport_core.ts";
 
 Deno.test("containers.create: returns response on 201", async () => {
   const api = new ContainersApi(
@@ -313,26 +314,30 @@ Deno.test("images.inspect: throws on other errors", async () => {
 
 Deno.test("images.pull: succeeds on 200", async () => {
   const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, _p, _b, _h) =>
+    buildTransport(
+      async () =>
         new Response(JSON.stringify({ images: ["sha256:abc"] }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         }),
-    }),
+      undefined,
+      () => {},
+    ),
   );
   const result = await api.pull({ reference: "alpine:latest" } as never);
   assertEquals(result.images, ["sha256:abc"]);
 });
 Deno.test("images.pull: throws on error", async () => {
   const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, _p, _b, _h) =>
+    buildTransport(
+      async () =>
         new Response(JSON.stringify({ message: "pull failed" }), {
           status: 500,
           headers: { "Content-Type": "application/json" },
         }),
-    }),
+      undefined,
+      () => {},
+    ),
   );
   await assertRejects(
     () => api.pull({ reference: "bad" } as never),

@@ -38,6 +38,11 @@ export {
   type MultiplexedOutputOptions,
   PodmanStreamError,
 } from "./internal/multiplexed-output.ts";
+export {
+  type BuildReport,
+  type BuildReportHandler,
+  collectBuildOutput,
+} from "./internal/build-output.ts";
 
 // All auto-generated schema types, friendly renames, custom types,
 // and operation query param types.

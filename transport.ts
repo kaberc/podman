@@ -22,7 +22,7 @@ export type {
 export interface TransportOptions {
   socketPath: string;
   apiVersion?: string;
-  timeout?: number;
+  timeout?: number | null;
   auth?: AuthOption;
   /** Aborting closes the transport and cancels every request in flight. */
   signal?: AbortSignal;
@@ -65,7 +65,7 @@ export interface TlsOptions {
 export interface TcpTransportOptions {
   uri: string;
   apiVersion?: string;
-  timeout?: number;
+  timeout?: number | null;
   auth?: AuthOption;
   tls?: TlsOptions;
   /** Aborting closes the transport and cancels every request in flight. */

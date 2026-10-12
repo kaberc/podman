@@ -1,6 +1,7 @@
 import type { Transport } from "../transport.ts";
 import { createPodmanError, throwRawError } from "../types/errors.ts";
 import { buildQuery } from "../internal/query.ts";
+import { readImagePull } from "../internal/image-pull.ts";
 import type {
   ContainerChange,
   ImageBuildQuery,
@@ -54,15 +55,22 @@ export class ImagesApi {
     return json as ImageInspect;
   }
 
-  /** Pull an image from a registry. */
-  async pull(query: ImagePullQuery): Promise<LibpodImagesPullReport> {
+  /** Pull an image; await each progress callback before consuming the next report. */
+  async pull(
+    query: ImagePullQuery,
+    onProgress?: (report: LibpodImagesPullReport) => void | Promise<void>,
+  ): Promise<LibpodImagesPullReport> {
     const path = `/images/pull${buildQuery(query)}`;
     const headers: Record<string, string> = {};
     const authHeader = this.#t.getAuthHeader();
     if (authHeader) headers["X-Registry-Auth"] = authHeader;
-    const res = await this.#t.requestRaw("POST", path, undefined, headers);
-    if (res.status !== 200) await throwRawError(res, "POST", path);
-    return (await res.json()) as LibpodImagesPullReport;
+    const stream = await this.#t.requestStream(
+      "POST",
+      path,
+      undefined,
+      headers,
+    );
+    return await readImagePull(stream, path, onProgress);
   }
 
   /** Remove an image. Returns a report of untagged and deleted layers. */
@@ -281,11 +289,6 @@ export class ImagesApi {
     query: LocalBuildQuery,
   ): Promise<ReadableStream<Uint8Array>> {
     const path = `/local/build${buildQuery(query)}`;
-    const res = await this.#t.requestRaw("POST", path);
-    if (res.status >= 400) await throwRawError(res, "POST", path);
-    if (!res.body) {
-      throw new Error("No response body for build");
-    }
-    return res.body;
+    return await this.#t.requestStream("POST", path);
   }
 }

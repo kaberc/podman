@@ -6,7 +6,7 @@
  */
 
 import { releaseOnEnd, TransportLifetime } from "./internal/lifetime.ts";
-import { extractMessage, PodmanError } from "./types/errors.ts";
+import { createPodmanError, PodmanError } from "./types/errors.ts";
 
 // ─── Public interfaces ───────────────────────────────────────────────────────
 
@@ -32,6 +32,8 @@ export interface Transport {
   requestStream(
     method: string,
     path: string,
+    body?: BodyInit,
+    headers?: Record<string, string>,
   ): Promise<ReadableStream<Uint8Array>>;
 
   getAuthHeader(): string | undefined;
@@ -54,8 +56,8 @@ export interface DoFetchInit {
 export interface TransportPolicy {
   /** Closes the transport when aborted, cancelling every request in flight. */
   signal?: AbortSignal;
-  /** Ordinary (non-stream) request timeout in ms. Default 30 000. */
-  timeout?: number;
+  /** Ordinary request timeout in ms; null leaves the client signal in control. */
+  timeout?: number | null;
 }
 
 export type DoFetchFn = (
@@ -165,11 +167,14 @@ export function buildTransport(
     async requestStream(
       method: string,
       path: string,
+      body?: BodyInit,
+      headers?: Record<string, string>,
     ): Promise<ReadableStream<Uint8Array>> {
       const scope = lifetime.scope(null);
       try {
         const res = await doFetch(method, path, {
-          headers: { "Accept": "application/json" },
+          body,
+          headers: { "Accept": "application/json", ...headers },
           signal: scope.signal,
         });
         if (res.status >= 400) {
@@ -180,14 +185,12 @@ export function buildTransport(
           } catch (error) {
             if (!(error instanceof SyntaxError)) throw error;
           }
-          throw new PodmanError({
-            status: res.status,
-            message: json
-              ? extractMessage(json)
-              : text || "Stream request failed",
+          throw createPodmanError(
+            res.status,
+            json ? json : { message: text || "Stream request failed" },
             method,
             path,
-          });
+          );
         }
         if (!res.body) {
           throw new Error(`No response body for ${method} ${path}`);

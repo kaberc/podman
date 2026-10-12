@@ -28,7 +28,7 @@ import { QuadletsApi } from "./api/quadlets.ts";
 export interface UnixClientOptions {
   socketPath: string;
   apiVersion?: string;
-  timeout?: number;
+  timeout?: number | null;
   auth?: AuthOption;
   readonly signal?: AbortSignal;
 }
@@ -37,7 +37,7 @@ export interface UnixClientOptions {
 export interface TcpClientOptions {
   uri: string;
   apiVersion?: string;
-  timeout?: number;
+  timeout?: number | null;
   auth?: AuthOption;
   tls?: TlsOptions;
   readonly signal?: AbortSignal;

@@ -6,6 +6,7 @@ import { NetworksApi } from "../../api/networks.ts";
 import { VolumesApi } from "../../api/volumes.ts";
 import { SystemApi } from "../../api/system.ts";
 import { mockTransport } from "./_test_helpers.ts";
+import { buildTransport } from "../../transport_core.ts";
 
 Deno.test("networks.exists: returns true on 204, false on 404", async () => {
   const apiTrue = new NetworksApi(
@@ -424,47 +425,55 @@ Deno.test("images.loadLocal: throws PodmanError on 500", async () => {
 Deno.test("images.buildLocal: returns stream on success", async () => {
   let capturedPath = "";
   const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, p, _b, _h) => {
+    buildTransport(
+      async (_m, p) => {
         capturedPath = p;
-        return new Response(new ReadableStream<Uint8Array>(), {
+        return new Response("build output", {
           status: 200,
         });
       },
-    }),
+      undefined,
+      () => {},
+    ),
   );
-  const result = await api.buildLocal({ contextdir: "/src" } as never);
+  const result = await api.buildLocal({ localcontextdir: "/src" });
   assertEquals(result instanceof ReadableStream, true);
   assertEquals(capturedPath.includes("/local/build"), true);
   assertEquals(capturedPath.includes("contextdir="), true);
+  assertEquals(await new Response(result).text(), "build output");
 });
 
 Deno.test("images.buildLocal: throws PodmanError on 400", async () => {
   const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, _p, _b, _h) =>
+    buildTransport(
+      async () =>
         new Response(JSON.stringify({ message: "build failed" }), {
           status: 400,
         }),
-    }),
+      undefined,
+      () => {},
+    ),
   );
   const err = await assertRejects(
-    () => api.buildLocal({ contextdir: "/src" } as never),
+    () => api.buildLocal({ localcontextdir: "/src" }),
     PodmanError,
   );
   assertEquals(err.status, 400);
+  assertEquals(err.message, "build failed");
 });
 
 Deno.test("images.buildLocal: throws on missing response body", async () => {
   const api = new ImagesApi(
-    mockTransport(() => ({ status: 200, json: null }), {
-      requestRaw: async (_m, _p, _b, _h) => new Response(null, { status: 200 }),
-    }),
+    buildTransport(
+      async () => new Response(null, { status: 200 }),
+      undefined,
+      () => {},
+    ),
   );
   await assertRejects(
-    () => api.buildLocal({ contextdir: "/src" } as never),
+    () => api.buildLocal({ localcontextdir: "/src" }),
     Error,
-    "No response body for build",
+    "No response body for POST /local/build",
   );
 });
 

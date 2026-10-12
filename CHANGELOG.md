@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.1
+
+- Image pulls consume progress and quiet reports, reject embedded errors, and
+  accept an awaited progress callback.
+- `collectBuildOutput` consumes build reports and rejects embedded errors.
+- Pulls and local builds use deadline-free streams with client-scoped
+  cancellation.
+- `requestStream` accepts upload bodies and custom headers, including registry
+  authentication.
+- Stream HTTP failures preserve typed Podman error subclasses.
+- Unix and TCP clients accept `timeout: null` when the caller owns the operation
+  deadline.
+
 ## 0.5.0
 
 ### Features
