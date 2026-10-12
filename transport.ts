@@ -24,6 +24,8 @@ export interface TransportOptions {
   apiVersion?: string;
   timeout?: number;
   auth?: AuthOption;
+  /** Aborting closes the transport and cancels every request in flight. */
+  signal?: AbortSignal;
 }
 
 export function createTransport(opts: TransportOptions): Transport {
@@ -36,19 +38,19 @@ export function createTransport(opts: TransportOptions): Transport {
   const base = `http://localhost/v${apiVersion}/libpod`;
 
   const doFetch: DoFetchFn = async (method, path, init) => {
-    const signal = init?.signal !== undefined
-      ? init.signal
-      : AbortSignal.timeout(timeout);
     return await fetch(`${base}${path}`, {
       method,
       headers: init?.headers,
       client,
       body: init?.body,
-      signal,
+      signal: init?.signal,
     });
   };
 
-  return buildTransport(doFetch, authHeader, () => client.close());
+  return buildTransport(doFetch, authHeader, () => client.close(), {
+    signal: opts.signal,
+    timeout,
+  });
 }
 
 export interface TlsOptions {
@@ -66,6 +68,8 @@ export interface TcpTransportOptions {
   timeout?: number;
   auth?: AuthOption;
   tls?: TlsOptions;
+  /** Aborting closes the transport and cancels every request in flight. */
+  signal?: AbortSignal;
 }
 
 export function createTcpTransport(opts: TcpTransportOptions): Transport {
@@ -82,17 +86,17 @@ export function createTcpTransport(opts: TcpTransportOptions): Transport {
     : undefined;
 
   const doFetch: DoFetchFn = async (method, path, init) => {
-    const signal = init?.signal !== undefined
-      ? init.signal
-      : AbortSignal.timeout(timeout);
     return await fetch(`${base}${path}`, {
       method,
       headers: init?.headers,
       body: init?.body,
-      signal,
+      signal: init?.signal,
       ...(client ? { client } : {}),
     });
   };
 
-  return buildTransport(doFetch, authHeader, () => client?.close());
+  return buildTransport(doFetch, authHeader, () => client?.close(), {
+    signal: opts.signal,
+    timeout,
+  });
 }

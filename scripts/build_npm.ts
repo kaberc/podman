@@ -29,14 +29,15 @@ for (const dir of SOURCE_DIRS) {
 }
 
 await Deno.copyFile("_node/transport.ts", `${TEMP}/transport.ts`);
+await Deno.copyFile("_node/node-request.ts", `${TEMP}/node-request.ts`);
 await Deno.copyFile("_node/ssh_transport.ts", `${TEMP}/ssh_transport.ts`);
 
 const tempTransport = await Deno.readTextFile(`${TEMP}/transport.ts`);
 await Deno.writeTextFile(
   `${TEMP}/transport.ts`,
   tempTransport.replaceAll(
-    `from "../transport_core.ts"`,
-    `from "./transport_core.ts"`,
+    `from "../`,
+    `from "./`,
   ),
 );
 
@@ -49,7 +50,6 @@ await Deno.writeTextFile(
   ),
 );
 
-
 await build({
   entryPoints: [`${TEMP}/mod.ts`],
   outDir: OUT,
@@ -57,7 +57,7 @@ await build({
     deno: false,
   },
   compilerOptions: {
-    lib: ["ES2022", "DOM", "DOM.Iterable"],
+    lib: ["ES2022", "DOM", "DOM.Iterable", "ESNext.Disposable"],
     target: "ES2022",
   },
   typeCheck: "both",
@@ -69,7 +69,7 @@ await build({
       "Typed Podman client for Node.js. Full libpod API — containers, images, pods, networks, volumes, secrets, exec, manifests, kube, artifacts, quadlets.",
     license: "MIT",
     engines: {
-      node: ">=18.0.0",
+      node: ">=18.18.0",
     },
     repository: {
       type: "git",

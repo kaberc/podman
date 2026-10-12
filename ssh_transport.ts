@@ -102,7 +102,7 @@ export async function createSshTransport(
     try {
       child.kill("SIGTERM");
     } catch { /* already dead */ }
-    let timerId: number | undefined;
+    let timerId: ReturnType<typeof setTimeout> | undefined;
     const errText = await Promise.race([
       drainStderr(child.stderr),
       new Promise<string>((r) => {

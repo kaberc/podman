@@ -5,6 +5,7 @@
  * `transport.ts` (Deno) or `_node/transport.ts` (Node).
  */
 
+import { releaseOnEnd, TransportLifetime } from "./internal/lifetime.ts";
 import { extractMessage, PodmanError } from "./types/errors.ts";
 
 // ─── Public interfaces ───────────────────────────────────────────────────────
@@ -46,7 +47,15 @@ export type AuthOption =
 export interface DoFetchInit {
   body?: BodyInit;
   headers?: Record<string, string>;
+  /** Always set by `buildTransport`: lifetime, caller and timeout combined. */
   signal?: AbortSignal | null;
+}
+
+export interface TransportPolicy {
+  /** Closes the transport when aborted, cancelling every request in flight. */
+  signal?: AbortSignal;
+  /** Ordinary (non-stream) request timeout in ms. Default 30 000. */
+  timeout?: number;
 }
 
 export type DoFetchFn = (
@@ -55,13 +64,35 @@ export type DoFetchFn = (
   init?: DoFetchInit,
 ) => Promise<Response>;
 
+/**
+ * `new Response` cannot carry `url`, `redirected` or `type`; copy them from the
+ * native response, including onto clones.
+ */
+function withNativeMetadata(wrapped: Response, native: Response): Response {
+  const { url, redirected, type } = native;
+  Object.defineProperties(wrapped, {
+    url: { value: url },
+    redirected: { value: redirected },
+    type: { value: type },
+    clone: {
+      value: () =>
+        withNativeMetadata(Response.prototype.clone.call(wrapped), native),
+    },
+  });
+  return wrapped;
+}
+
 // ─── Shared builder ──────────────────────────────────────────────────────────
 
 export function buildTransport(
   doFetch: DoFetchFn,
   authHeader: string | undefined,
   closeFn: () => void,
+  policy: TransportPolicy = {},
 ): Transport {
+  const { signal, timeout = 30_000 } = policy;
+  const lifetime = new TransportLifetime(closeFn, signal);
+
   return {
     async request(
       method: string,
@@ -75,12 +106,19 @@ export function buildTransport(
         headers["Content-Type"] = "application/json";
       }
 
-      const res = await doFetch(method, path, {
-        body: body !== undefined ? JSON.stringify(body) : undefined,
-        headers,
-      });
-
-      const text = await res.text();
+      const scope = lifetime.scope(timeout);
+      let text: string;
+      let res: Response;
+      try {
+        res = await doFetch(method, path, {
+          body: body !== undefined ? JSON.stringify(body) : undefined,
+          headers,
+          signal: scope.signal,
+        });
+        text = await res.text();
+      } finally {
+        scope.release();
+      }
       let json: unknown = null;
       if (text.trim()) {
         try {
@@ -103,41 +141,65 @@ export function buildTransport(
       body?: BodyInit,
       headers?: Record<string, string>,
     ): Promise<Response> {
-      return await doFetch(method, path, { body, headers });
+      const scope = lifetime.scope(timeout);
+      try {
+        const res = await doFetch(method, path, {
+          body,
+          headers,
+          signal: scope.signal,
+        });
+        if (!res.body) {
+          scope.release();
+          return res;
+        }
+        return withNativeMetadata(
+          new Response(releaseOnEnd(res.body, scope.release), res),
+          res,
+        );
+      } catch (error) {
+        scope.release();
+        throw error;
+      }
     },
 
     async requestStream(
       method: string,
       path: string,
     ): Promise<ReadableStream<Uint8Array>> {
-      const res = await doFetch(method, path, {
-        headers: { "Accept": "application/json" },
-        signal: null,
-      });
-      if (res.status >= 400) {
-        const text = await res.text();
-        let json: unknown = null;
-        try {
-          json = text.trim() ? JSON.parse(text) : null;
-        } catch {
-          // use raw text as message if JSON parse fails
-        }
-        throw new PodmanError({
-          status: res.status,
-          message: json
-            ? extractMessage(json)
-            : text || "Stream request failed",
-          method,
-          path,
+      const scope = lifetime.scope(null);
+      try {
+        const res = await doFetch(method, path, {
+          headers: { "Accept": "application/json" },
+          signal: scope.signal,
         });
+        if (res.status >= 400) {
+          const text = await res.text();
+          let json: unknown = null;
+          try {
+            json = text.trim() ? JSON.parse(text) : null;
+          } catch (error) {
+            if (!(error instanceof SyntaxError)) throw error;
+          }
+          throw new PodmanError({
+            status: res.status,
+            message: json
+              ? extractMessage(json)
+              : text || "Stream request failed",
+            method,
+            path,
+          });
+        }
+        if (!res.body) {
+          throw new Error(`No response body for ${method} ${path}`);
+        }
+        return releaseOnEnd(res.body, scope.release);
+      } catch (error) {
+        scope.release();
+        throw error;
       }
-      if (!res.body) {
-        throw new Error(`No response body for ${method} ${path}`);
-      }
-      return res.body;
     },
 
-    close: closeFn,
+    close: () => lifetime.close(),
     getAuthHeader(): string | undefined {
       return authHeader;
     },

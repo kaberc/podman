@@ -30,6 +30,7 @@ export interface UnixClientOptions {
   apiVersion?: string;
   timeout?: number;
   auth?: AuthOption;
+  readonly signal?: AbortSignal;
 }
 
 /** Options for connecting to Podman via TCP or TLS. */
@@ -39,6 +40,7 @@ export interface TcpClientOptions {
   timeout?: number;
   auth?: AuthOption;
   tls?: TlsOptions;
+  readonly signal?: AbortSignal;
 }
 
 /** Union of all client connection options (Unix socket or TCP/TLS). */
@@ -47,7 +49,7 @@ export type ClientOptions = UnixClientOptions | TcpClientOptions;
 export type SshClientOptions = SshTransportOptions;
 
 /** Client interface exposing all 13 Podman libpod API modules. */
-export interface PodmanClient {
+export interface PodmanClient extends Disposable {
   containers: ContainersApi;
   images: ImagesApi;
   networks: NetworksApi;
@@ -82,6 +84,9 @@ function buildPodmanClient(transport: Transport): PodmanClient {
     close() {
       transport.close();
     },
+    [Symbol.dispose]() {
+      transport.close();
+    },
   };
 }
 
@@ -95,6 +100,7 @@ export function createClient(opts: ClientOptions): PodmanClient {
       apiVersion: opts.apiVersion,
       timeout: opts.timeout,
       auth: opts.auth,
+      signal: opts.signal,
     };
     transport = createTransport(transportOpts);
   } else {
@@ -104,6 +110,7 @@ export function createClient(opts: ClientOptions): PodmanClient {
       timeout: opts.timeout,
       auth: opts.auth,
       tls: opts.tls,
+      signal: opts.signal,
     });
   }
 
