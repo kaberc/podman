@@ -33,6 +33,11 @@ export {
 } from "./ssh_transport.ts";
 
 export type { AuthOption } from "./transport_core.ts";
+export {
+  collectMultiplexedOutput,
+  type MultiplexedOutputOptions,
+  PodmanStreamError,
+} from "./internal/multiplexed-output.ts";
 
 // All auto-generated schema types, friendly renames, custom types,
 // and operation query param types.
