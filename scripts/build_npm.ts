@@ -57,7 +57,7 @@ await build({
     license: "MIT",
     engines: {
       node: ">=18.18.0",
-      bun: ">=1.4.3",
+      bun: ">=1.4.0",
     },
     repository: {
       type: "git",

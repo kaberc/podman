@@ -56,7 +56,7 @@ import { createClient } from "@ostanin/podman";
 
 **Requirements:**
 
-- Deno 2.4+, Node.js 18.18+, or Bun 1.4.3+
+- Deno 2.4+, Node.js 18.18+, or Bun 1.4.0+
 - Podman 6.0+ with the libpod API. Types use the stable Podman 6.1.3
   specification
 
@@ -571,7 +571,7 @@ The npm package is built from the Deno source using
 [`dnt`](https://github.com/denoland/dnt):
 
 ```sh
-deno task build-npm 0.6.0
+deno task build-npm 0.6.1
 ```
 
 This outputs a complete npm package to `./npm/` with ESM, CJS, and type

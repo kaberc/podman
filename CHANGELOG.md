@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+- The minimum supported Bun version is 1.4.0, the first release whose native
+  fetch bounds unread response buffering and cancels request uploads. CI runs
+  the Bun suite on 1.4.0 and 1.4.3.
+
 ## 0.6.0
 
 ### Podman 6 migration
