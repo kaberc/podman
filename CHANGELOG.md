@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.0
+
+### Features
+
+- Unix and TCP clients accept an `AbortSignal` that controls their requests and
+  response streams.
+- Clients support `Symbol.dispose`. `close()` stops active requests and streams
+  and refuses new requests.
+- `collectMultiplexedOutput` decodes non-TTY stdout/stderr streams with a
+  caller-defined combined byte limit. Invalid or truncated frames cause a typed
+  `PodmanStreamError`.
+
+### Behavior changes
+
+- Node.js requires version 18.18 or later for `Symbol.dispose`.
+- TypeScript declarations require `Disposable` from `ESNext.Disposable`
+  (TypeScript 5.2 or later), or recent Node types.
+- Disposal now stops active I/O. Consume response streams before the client
+  scope ends.
+- Response streams use default readers; BYOB readers are not supported.
+
 ## 0.4.1
 
 ### Fixes

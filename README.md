@@ -45,7 +45,7 @@ import { createClient } from "@ostanin/podman";
 
 **Requirements:**
 
-- Deno 2.4+ or Node.js 18+
+- Deno 2.4+ or Node.js 18.18+
 - Podman with libpod API v4.0.0+
 
 ## Quick Start
@@ -96,6 +96,46 @@ const podman = createClient({ socketPath: "/run/podman/podman.sock" });
 | `apiVersion` | `string` | `"4.0.0"` | Podman API version           |
 | `timeout`    | `number` | `30000`   | Request timeout (ms)         |
 | `auth`       | `object` | —         | Registry credentials         |
+
+### Cancellation and disposal
+
+Use `signal` to bind a client to one operation. Cancellation stops its requests
+and response streams. `close()` also stops these resources and refuses new
+requests. You can call it more than once. The client supports `Symbol.dispose`,
+so a `using` scope closes it automatically.
+
+```ts
+const cancellation = new AbortController();
+using podman = createClient({
+  socketPath: "/run/podman/podman.sock",
+  signal: cancellation.signal,
+});
+```
+
+The request `timeout` does not limit long-lived streams from `requestStream`.
+Client cancellation and disposal still apply to these streams. Response streams
+support default readers, not BYOB readers. TypeScript consumers need
+`Disposable` from `ESNext.Disposable` (TypeScript 5.2 or later), or recent Node
+types.
+
+### Multiplexed output
+
+Use `collectMultiplexedOutput` for non-TTY stdout/stderr streams from Podman.
+Set `maxBytes` to limit the combined output size. Invalid frames and truncated
+output cause `PodmanStreamError`.
+
+```ts
+import { collectMultiplexedOutput } from "@ostanin/podman";
+
+const stream = await podman.containers.logs("my-container", {
+  stdout: true,
+  stderr: true,
+});
+const output = await collectMultiplexedOutput(stream, {
+  maxBytes: 4 * 1024 * 1024,
+  signal: cancellation.signal,
+});
+```
 
 ### TCP (Remote Podman API)
 
