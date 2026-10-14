@@ -6,6 +6,19 @@
 // Re-export all auto-generated schema and query types so importers only need this file.
 export type * from "./models/index.ts";
 export type * from "./queries.ts";
+import type {
+  ImageBuildQuery as GeneratedImageBuildQuery,
+  LocalBuildQuery as GeneratedLocalBuildQuery,
+} from "./queries.ts";
+
+type BuildFormatQuery = {
+  readonly outputformat?:
+    | "application/vnd.oci.image.manifest.v1+json"
+    | "application/vnd.docker.distribution.manifest.v2+json";
+};
+
+export type ImageBuildQuery = GeneratedImageBuildQuery & BuildFormatQuery;
+export type LocalBuildQuery = GeneratedLocalBuildQuery & BuildFormatQuery;
 
 import type {
   ComponentVersion,

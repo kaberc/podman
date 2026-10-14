@@ -240,6 +240,6 @@ Deno.test("images.buildLocal preserves HTTP stream error details", async () => {
   assertEquals([error.status, error.method, error.path], [
     500,
     "POST",
-    "/local/build?localcontextdir=%2Fcontext",
+    "/local/build?localcontextdir=%2Fcontext&outputformat=application%2Fvnd.oci.image.manifest.v1%2Bjson",
   ]);
 });

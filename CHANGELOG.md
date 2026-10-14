@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2
+
+- Image builds select an explicit OCI output format by default so Podman reuses
+  cached layers when `layers: true`. Both tar and local builds accept an
+  explicit OCI or Docker output format.
+
 ## 0.6.1
 
 - The minimum supported Bun version is 1.4.0, the first release whose native

@@ -1,6 +1,7 @@
 import type { Transport } from "../transport.ts";
 import { createPodmanError, throwRawError } from "../types/errors.ts";
 import { buildQuery } from "../internal/query.ts";
+import { buildImageQuery } from "../internal/build-query.ts";
 import type { ImagePullReport } from "../internal/image-pull.ts";
 import { pullImage, pushImage } from "../internal/image-transfer.ts";
 import { registerBuildOutput } from "../internal/build-output.ts";
@@ -162,7 +163,7 @@ export class ImagesApi {
     body: ReadableStream<Uint8Array>,
     query?: ImageBuildQuery,
   ): Promise<ReadableStream<Uint8Array>> {
-    const path = `/build${buildQuery(query)}`;
+    const path = `/build${buildImageQuery(query)}`;
     const stream = await this.#t.requestStream("POST", path, body, {
       "Content-Type": "application/x-tar",
     });
@@ -268,7 +269,7 @@ export class ImagesApi {
   async buildLocal(
     query: LocalBuildQuery,
   ): Promise<ReadableStream<Uint8Array>> {
-    const path = `/local/build${buildQuery(query)}`;
+    const path = `/local/build${buildImageQuery(query)}`;
     return registerBuildOutput(await this.#t.requestStream("POST", path), path);
   }
 }

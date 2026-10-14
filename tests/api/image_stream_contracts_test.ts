@@ -126,8 +126,8 @@ for (const local of [false, true]) {
     assertEquals(
       error.path,
       local
-        ? "/local/build?localcontextdir=%2Fcontext&target=stage"
-        : "/build?target=stage",
+        ? "/local/build?localcontextdir=%2Fcontext&target=stage&outputformat=application%2Fvnd.oci.image.manifest.v1%2Bjson"
+        : "/build?target=stage&outputformat=application%2Fvnd.oci.image.manifest.v1%2Bjson",
     );
   });
 }
